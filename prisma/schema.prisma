@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  city      String?
+  state     String?
+  zip       String?
+  country   String   @default("US")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoices       Invoice[]
+  purchaseOrders PurchaseOrder[]
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  status        String        @default("draft") // draft, sent, paid, overdue, cancelled
+  issueDate     DateTime      @default(now())
+  dueDate       DateTime
+  subtotal      Float         @default(0)
+  taxRate       Float         @default(0)
+  taxAmount     Float         @default(0)
+  total         Float         @default(0)
+  notes         String?
+  terms         String?
+  customerId    String
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lineItems     LineItem[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model PurchaseOrder {
+  id            String         @id @default(cuid())
+  poNumber      String         @unique
+  status        String         @default("draft") // draft, submitted, approved, received, cancelled
+  issueDate     DateTime       @default(now())
+  expectedDate  DateTime?
+  subtotal      Float          @default(0)
+  taxRate       Float          @default(0)
+  taxAmount     Float          @default(0)
+  total         Float          @default(0)
+  notes         String?
+  terms         String?
+  customerId    String
+  customer      Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lineItems     POLineItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model LineItem {
+  id          String  @id @default(cuid())
+  description String
+  quantity    Float
+  unitPrice   Float
+  amount      Float
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model POLineItem {
+  id              String        @id @default(cuid())
+  description     String
+  quantity        Float
+  unitPrice       Float
+  amount          Float
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+}
