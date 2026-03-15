@@ -22,7 +22,7 @@ export async function listPurchaseOrders(
     prisma.purchaseOrder.findMany({
       where,
       include: {
-        customer: { select: { id: true, name: true, email: true } },
+        customer: { select: { id: true, companyName: true, email: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (validPage - 1) * validLimit,
@@ -76,7 +76,7 @@ export async function createPurchaseOrder(data: POCreateInput) {
           poNumber: generatePONumber(),
           status: data.status,
           issueDate: new Date(data.issueDate),
-          expectedDate: data.expectedDate ? new Date(data.expectedDate) : null,
+          dueDate: data.dueDate ? new Date(data.dueDate) : null,
           subtotal,
           taxRate: data.taxRate,
           taxAmount,
@@ -89,7 +89,7 @@ export async function createPurchaseOrder(data: POCreateInput) {
               description: item.description,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
-              amount: calculateLineItemAmount(item.quantity, item.unitPrice),
+              total: calculateLineItemAmount(item.quantity, item.unitPrice),
             })),
           },
         },
@@ -130,13 +130,13 @@ export async function updatePurchaseOrder(id: string, data: Partial<POUpdateInpu
       updateData.issueDate = d;
     }
   }
-  if (data.expectedDate !== undefined) {
-    if (data.expectedDate) {
-      const d = new Date(data.expectedDate);
+  if (data.dueDate !== undefined) {
+    if (data.dueDate) {
+      const d = new Date(data.dueDate);
       if (isNaN(d.getTime())) {
-        throw new Error("Invalid expectedDate");
+        throw new Error("Invalid dueDate");
       }
-      updateData.expectedDate = d;
+      updateData.dueDate = d;
     }
   }
   if (data.notes !== undefined) updateData.notes = data.notes;
@@ -177,7 +177,7 @@ export async function updatePurchaseOrder(id: string, data: Partial<POUpdateInpu
               description: item.description,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
-              amount: calculateLineItemAmount(item.quantity, item.unitPrice),
+              total: calculateLineItemAmount(item.quantity, item.unitPrice),
             })),
           },
         },

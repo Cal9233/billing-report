@@ -289,25 +289,25 @@ describe("M4: Customer PUT endpoint", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("updates a customer successfully", async () => {
-    const updated = { id: "cust-1", name: "Updated Corp", email: "new@test.com", _count: { invoices: 0, purchaseOrders: 0 } };
+    const updated = { id: "cust-1", companyName: "Updated Corp", email: "new@test.com", _count: { invoices: 0, purchaseOrders: 0 } };
     mockCustomerUpdate.mockResolvedValueOnce(updated);
 
     const req = makeRequest("http://localhost:3000/api/customers/cust-1", {
-      name: "Updated Corp",
+      companyName: "Updated Corp",
       email: "new@test.com",
     }, "PUT");
 
     const res = await customerPUT(req, { params: Promise.resolve({ id: "cust-1" }) });
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.name).toBe("Updated Corp");
+    expect(body.companyName).toBe("Updated Corp");
   });
 
   it("returns 404 when customer does not exist", async () => {
     mockCustomerUpdate.mockRejectedValueOnce(makePrismaError("P2025"));
 
     const req = makeRequest("http://localhost:3000/api/customers/nonexistent", {
-      name: "Test",
+      companyName: "Test",
     }, "PUT");
 
     const res = await customerPUT(req, { params: Promise.resolve({ id: "nonexistent" }) });
@@ -339,7 +339,7 @@ describe("M4: Customer DELETE endpoint", () => {
   it("deletes a customer with no related records", async () => {
     mockCustomerFindUnique.mockResolvedValueOnce({
       id: "cust-1",
-      name: "Test",
+      companyName: "Test",
       _count: { invoices: 0, purchaseOrders: 0 },
     });
     mockCustomerDelete.mockResolvedValueOnce({ id: "cust-1" });
@@ -364,7 +364,7 @@ describe("M4: Customer DELETE endpoint", () => {
   it("returns 409 when customer has related invoices/POs", async () => {
     mockCustomerFindUnique.mockResolvedValueOnce({
       id: "cust-1",
-      name: "Test",
+      companyName: "Test",
       _count: { invoices: 3, purchaseOrders: 1 },
     });
 

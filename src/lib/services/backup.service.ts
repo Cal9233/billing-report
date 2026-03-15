@@ -24,7 +24,7 @@ export async function exportInvoices(
   // CSV export
   const rows = invoices.map((inv) => ({
     "Invoice Number": inv.invoiceNumber,
-    "Customer Name": inv.customer.name,
+    "Customer Name": inv.customer.companyName,
     "Customer Email": inv.customer.email || "",
     "Issue Date": inv.issueDate.toISOString().split("T")[0],
     "Due Date": inv.dueDate.toISOString().split("T")[0],
@@ -57,11 +57,11 @@ export async function exportPurchaseOrders(
   // CSV export
   const rows = purchaseOrders.map((po) => ({
     "PO Number": po.poNumber,
-    "Vendor Name": po.customer.name,
+    "Vendor Name": po.customer.companyName,
     "Vendor Email": po.customer.email || "",
     "Issue Date": po.issueDate.toISOString().split("T")[0],
-    "Expected Date": po.expectedDate
-      ? po.expectedDate.toISOString().split("T")[0]
+    "Due Date": po.dueDate
+      ? po.dueDate.toISOString().split("T")[0]
       : "",
     "Subtotal": po.subtotal.toFixed(2),
     "Tax Rate %": po.taxRate.toFixed(2),
@@ -78,7 +78,7 @@ export async function exportCustomers(
   options: ExportOptions = { format: "csv" }
 ): Promise<string> {
   const customers = await prisma.customer.findMany({
-    orderBy: { name: "asc" },
+    orderBy: { companyName: "asc" },
   });
 
   if (options.format === "json") {
@@ -87,7 +87,7 @@ export async function exportCustomers(
 
   // CSV export
   const rows = customers.map((cust) => ({
-    "Customer Name": cust.name,
+    "Customer Name": cust.companyName,
     "Email": cust.email || "",
     "Phone": cust.phone || "",
     "Address": cust.address || "",
@@ -163,7 +163,7 @@ export async function restoreFromBackup(
           }
         } catch (err) {
           errors.push(
-            `Failed to restore customer "${cust.name}": ${String(err)}`
+            `Failed to restore customer "${cust.companyName}": ${String(err)}`
           );
         }
       }

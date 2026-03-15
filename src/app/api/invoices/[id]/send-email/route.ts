@@ -37,7 +37,7 @@ export async function POST(
     const sent = await sendInvoiceEmail(
       invoice.customer.email,
       invoice.invoiceNumber,
-      invoice.customer.name,
+      invoice.customer.companyName,
       invoice.total,
       invoice.dueDate
     );

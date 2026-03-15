@@ -14,7 +14,7 @@ export async function listCustomers(
 
   const [customers, total] = await Promise.all([
     prisma.customer.findMany({
-      orderBy: { name: "asc" },
+      orderBy: { companyName: "asc" },
       include: {
         _count: {
           select: { invoices: true, purchaseOrders: true },

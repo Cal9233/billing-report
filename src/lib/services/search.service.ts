@@ -23,7 +23,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     where: {
       OR: [
         { invoiceNumber: { contains: searchTerm } },
-        { customer: { name: { contains: searchTerm } } },
+        { customer: { companyName: { contains: searchTerm } } },
       ],
     },
     select: {
@@ -31,7 +31,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       invoiceNumber: true,
       total: true,
       status: true,
-      customer: { select: { name: true } },
+      customer: { select: { companyName: true } },
     },
     take: 5,
   });
@@ -41,7 +41,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       id: inv.id,
       type: "invoice" as const,
       title: `Invoice ${inv.invoiceNumber}`,
-      subtitle: inv.customer.name,
+      subtitle: inv.customer.companyName,
       href: `/invoices/${inv.id}`,
       amount: inv.total,
       status: inv.status,
@@ -53,7 +53,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     where: {
       OR: [
         { poNumber: { contains: searchTerm } },
-        { customer: { name: { contains: searchTerm } } },
+        { customer: { companyName: { contains: searchTerm } } },
       ],
     },
     select: {
@@ -61,7 +61,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       poNumber: true,
       total: true,
       status: true,
-      customer: { select: { name: true } },
+      customer: { select: { companyName: true } },
     },
     take: 5,
   });
@@ -71,7 +71,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       id: po.id,
       type: "purchase_order" as const,
       title: `PO ${po.poNumber}`,
-      subtitle: po.customer.name,
+      subtitle: po.customer.companyName,
       href: `/purchase-orders/${po.id}`,
       amount: po.total,
       status: po.status,
@@ -82,14 +82,14 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
   const customers = await prisma.customer.findMany({
     where: {
       OR: [
-        { name: { contains: searchTerm } },
+        { companyName: { contains: searchTerm } },
         { email: { contains: searchTerm } },
         { phone: { contains: searchTerm } },
       ],
     },
     select: {
       id: true,
-      name: true,
+      companyName: true,
       email: true,
     },
     take: 5,
@@ -99,7 +99,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     ...customers.map((cust) => ({
       id: cust.id,
       type: "customer" as const,
-      title: cust.name,
+      title: cust.companyName,
       subtitle: cust.email || "No email",
       href: `/customers?customerId=${cust.id}`,
     }))
@@ -125,7 +125,7 @@ export async function searchInvoices(
         {
           OR: [
             { invoiceNumber: { contains: searchTerm } },
-            { customer: { name: { contains: searchTerm } } },
+            { customer: { companyName: { contains: searchTerm } } },
             { notes: { contains: searchTerm } },
           ],
         },
@@ -159,7 +159,7 @@ export async function searchPurchaseOrders(
         {
           OR: [
             { poNumber: { contains: searchTerm } },
-            { customer: { name: { contains: searchTerm } } },
+            { customer: { companyName: { contains: searchTerm } } },
             { notes: { contains: searchTerm } },
           ],
         },

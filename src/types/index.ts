@@ -26,7 +26,7 @@ export const invoiceUpdateSchema = invoiceCreateSchema.partial();
 export const purchaseOrderCreateSchema = z.object({
   customerId: z.string().min(1, "Vendor is required").max(100, "Customer ID too long"),
   issueDate: z.string().min(1, "Issue date is required").max(50, "Issue date too long"),
-  expectedDate: z.string().max(50, "Expected date too long").optional(),
+  dueDate: z.string().max(50, "Due date too long").optional(),
   taxRate: z.number().min(0).max(100).default(0),
   notes: z.string().max(5000, "Notes too long").optional(),
   terms: z.string().max(5000, "Terms too long").optional(),
@@ -37,7 +37,7 @@ export const purchaseOrderCreateSchema = z.object({
 export const purchaseOrderUpdateSchema = purchaseOrderCreateSchema.partial();
 
 export const customerCreateSchema = z.object({
-  name: z.string().min(1, "Company name is required").max(200, "Company name too long"),
+  companyName: z.string().min(1, "Company name is required").max(200, "Company name too long"),
   contactName: z.string().max(200, "Contact name too long").optional(),
   email: z.string().email().max(254, "Email too long").optional().or(z.literal("")),
   phone: z.string().max(30, "Phone too long").optional(),
@@ -62,7 +62,7 @@ export type CustomerUpdateInput = z.infer<typeof customerUpdateSchema>;
 
 export const paymentCreateSchema = z.object({
   amount: z.number().positive("Amount must be positive").max(1_000_000_000, "Amount too large"),
-  paymentDate: z.string().min(1, "Payment date is required").max(50, "Payment date too long"),
+  date: z.string().min(1, "Payment date is required").max(50, "Payment date too long"),
   method: z.enum(["cash", "check", "credit_card", "bank_transfer", "other"]),
   notes: z.string().max(500, "Notes too long").optional(),
 });

@@ -22,7 +22,7 @@ interface Invoice {
   terms: string | null;
   customer: {
     id: string;
-    name: string;
+    companyName: string;
     email: string | null;
     address: string | null;
     city: string | null;
@@ -34,7 +34,7 @@ interface Invoice {
     description: string;
     quantity: number;
     unitPrice: number;
-    amount: number;
+    total: number;
   }[];
 }
 
@@ -159,7 +159,7 @@ export default function InvoiceDetailPage() {
           <p className="text-xs text-muted-foreground mb-1 font-semibold uppercase tracking-wide">
             Bill To
           </p>
-          <p className="font-semibold text-base">{invoice.customer.name}</p>
+          <p className="font-semibold text-base">{invoice.customer.companyName}</p>
           {invoice.customer.email && (
             <p className="text-sm text-muted-foreground">
               {invoice.customer.email}
@@ -211,7 +211,7 @@ export default function InvoiceDetailPage() {
                   {formatCurrency(item.unitPrice)}
                 </td>
                 <td className="py-3 text-sm text-right font-medium">
-                  {formatCurrency(item.amount)}
+                  {formatCurrency(item.total)}
                 </td>
               </tr>
             ))}

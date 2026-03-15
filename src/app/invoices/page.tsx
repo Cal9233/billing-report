@@ -14,7 +14,7 @@ interface Invoice {
   issueDate: string;
   dueDate: string;
   total: number;
-  customer: { id: string; name: string; email: string | null };
+  customer: { id: string; companyName: string; email: string | null };
 }
 
 export default function InvoicesPage() {
@@ -57,7 +57,7 @@ export default function InvoicesPage() {
     ? invoices.filter(
         (inv) =>
           inv.invoiceNumber.toLowerCase().includes(search.toLowerCase()) ||
-          inv.customer.name.toLowerCase().includes(search.toLowerCase()),
+          inv.customer.companyName.toLowerCase().includes(search.toLowerCase()),
       )
     : invoices;
 
@@ -225,7 +225,7 @@ export default function InvoicesPage() {
                       </Link>
                     </td>
                     <td className="py-4 px-4 text-sm text-foreground">
-                      {inv.customer.name}
+                      {inv.customer.companyName}
                     </td>
                     <td className="py-4 px-4">
                       <StatusBadge status={inv.status} />

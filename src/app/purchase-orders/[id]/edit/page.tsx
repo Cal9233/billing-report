@@ -46,7 +46,7 @@ export default function EditPOPage() {
           id: po.id as string,
           customerId: po.customerId as string,
           issueDate: (po.issueDate as string).split("T")[0],
-          expectedDate: po.expectedDate ? (po.expectedDate as string).split("T")[0] : "",
+          dueDate: po.dueDate ? (po.dueDate as string).split("T")[0] : "",
           taxRate: po.taxRate as number,
           notes: (po.notes as string) || "",
           terms: (po.terms as string) || "",

@@ -10,7 +10,7 @@ import type { LineItemInput } from "@/types";
 
 interface Customer {
   id: string;
-  name: string;
+  companyName: string;
 }
 
 interface POFormProps {
@@ -18,7 +18,7 @@ interface POFormProps {
     id?: string;
     customerId: string;
     issueDate: string;
-    expectedDate: string;
+    dueDate: string;
     taxRate: number;
     notes: string;
     terms: string;
@@ -37,7 +37,7 @@ export function POForm({ initialData, mode }: POFormProps) {
   const [formData, setFormData] = useState({
     customerId: initialData?.customerId || "",
     issueDate: initialData?.issueDate || new Date().toISOString().split("T")[0],
-    expectedDate: initialData?.expectedDate || "",
+    dueDate: initialData?.dueDate || "",
     taxRate: initialData?.taxRate || 0,
     notes: initialData?.notes || "",
     terms: initialData?.terms || "Net 15",
@@ -93,7 +93,7 @@ export function POForm({ initialData, mode }: POFormProps) {
       const payload = {
         ...formData,
         taxRate: Number(formData.taxRate),
-        expectedDate: formData.expectedDate || undefined,
+        dueDate: formData.dueDate || undefined,
         lineItems: formData.lineItems.map((item) => ({
           ...item,
           quantity: Number(item.quantity),
@@ -147,7 +147,7 @@ export function POForm({ initialData, mode }: POFormProps) {
               >
                 <option value="">Select a vendor...</option>
                 {customers.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>{c.companyName}</option>
                 ))}
               </select>
             </div>
@@ -172,9 +172,9 @@ export function POForm({ initialData, mode }: POFormProps) {
                 onChange={(e) => setFormData((prev) => ({ ...prev, issueDate: e.target.value }))} required />
             </div>
             <div>
-              <label htmlFor="po-expected-date" className="block text-sm font-medium mb-1">Expected Delivery</label>
-              <Input id="po-expected-date" type="date" value={formData.expectedDate}
-                onChange={(e) => setFormData((prev) => ({ ...prev, expectedDate: e.target.value }))} />
+              <label htmlFor="po-due-date" className="block text-sm font-medium mb-1">Due Date</label>
+              <Input id="po-due-date" type="date" value={formData.dueDate}
+                onChange={(e) => setFormData((prev) => ({ ...prev, dueDate: e.target.value }))} />
             </div>
             <div>
               <label htmlFor="po-tax-rate" className="block text-sm font-medium mb-1">Tax Rate (%)</label>

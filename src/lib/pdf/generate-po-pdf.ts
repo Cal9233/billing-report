@@ -6,7 +6,7 @@ interface POPDFData {
   poNumber: string;
   status: string;
   issueDate: string | Date;
-  expectedDate?: string | Date | null;
+  dueDate?: string | Date | null;
   subtotal: number;
   taxRate: number;
   taxAmount: number;
@@ -14,7 +14,7 @@ interface POPDFData {
   notes?: string | null;
   terms?: string | null;
   customer: {
-    name: string;
+    companyName: string;
     email?: string | null;
     address?: string | null;
     city?: string | null;
@@ -25,7 +25,7 @@ interface POPDFData {
     description: string;
     quantity: number;
     unitPrice: number;
-    amount: number;
+    total: number;
   }[];
 }
 
@@ -43,8 +43,8 @@ export function generatePOPDF(data: POPDFData): jsPDF {
   doc.text(`PO #: ${data.poNumber}`, 20, 42);
   doc.text(`Status: ${data.status.toUpperCase()}`, 20, 50);
   doc.text(`Issue Date: ${formatDate(data.issueDate)}`, 20, 58);
-  if (data.expectedDate) {
-    doc.text(`Expected Delivery: ${formatDate(data.expectedDate)}`, 20, 66);
+  if (data.dueDate) {
+    doc.text(`Due Date: ${formatDate(data.dueDate)}`, 20, 66);
   }
 
   // Company info (right side)
@@ -66,7 +66,7 @@ export function generatePOPDF(data: POPDFData): jsPDF {
   doc.text("VENDOR:", 20, 84);
   doc.setFontSize(13);
   doc.setTextColor(0, 0, 0);
-  doc.text(data.customer.name, 20, 93);
+  doc.text(data.customer.companyName, 20, 93);
 
   let vendorY = 101;
   if (data.customer.email) {
@@ -96,7 +96,7 @@ export function generatePOPDF(data: POPDFData): jsPDF {
       item.description,
       item.quantity.toString(),
       formatCurrency(item.unitPrice),
-      formatCurrency(item.amount),
+      formatCurrency(item.total),
     ]),
     headStyles: {
       fillColor: [16, 163, 74],

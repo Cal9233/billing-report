@@ -24,7 +24,7 @@ export async function createPayment(
     data: {
       invoiceId,
       amount: data.amount,
-      paymentDate: new Date(data.paymentDate),
+      date: new Date(data.date),
       method: data.method,
       notes: data.notes,
     },
@@ -53,7 +53,7 @@ export async function createPayment(
 export async function getPaymentsByInvoice(invoiceId: string): Promise<any[]> {
   return prisma.payment.findMany({
     where: { invoiceId },
-    orderBy: { paymentDate: "desc" },
+    orderBy: { date: "desc" },
   });
 }
 
@@ -78,7 +78,7 @@ export async function getPaymentSummary(invoiceId: string): Promise<any> {
     totalPaid,
     remaining,
     paymentCount: payments.length,
-    lastPaymentDate: payments.length > 0 ? payments[0].paymentDate : null,
+    lastPaymentDate: payments.length > 0 ? payments[0].date : null,
     payments,
   };
 }
@@ -138,9 +138,9 @@ export async function updatePayment(
     where: { id: paymentId },
     data: {
       amount: data.amount ?? payment.amount,
-      paymentDate: data.paymentDate
-        ? new Date(data.paymentDate)
-        : payment.paymentDate,
+      date: data.date
+        ? new Date(data.date)
+        : payment.date,
       method: data.method ?? payment.method,
       notes: data.notes ?? payment.notes,
     },

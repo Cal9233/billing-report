@@ -42,7 +42,7 @@ export async function getOverdueInvoices(): Promise<OverdueInvoice[]> {
       status: true,
       customer: {
         select: {
-          name: true,
+          companyName: true,
         },
       },
     },
@@ -60,7 +60,7 @@ export async function getOverdueInvoices(): Promise<OverdueInvoice[]> {
     return {
       id: inv.id,
       invoiceNumber: inv.invoiceNumber,
-      customerName: inv.customer.name,
+      customerName: inv.customer.companyName,
       total: inv.total,
       dueDate: inv.dueDate,
       daysOverdue,

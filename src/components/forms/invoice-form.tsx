@@ -10,7 +10,7 @@ import type { LineItemInput } from "@/types";
 
 interface Customer {
   id: string;
-  name: string;
+  companyName: string;
 }
 
 interface InvoiceFormProps {
@@ -161,7 +161,7 @@ export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
                 <option value="">Select a customer...</option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {c.companyName}
                   </option>
                 ))}
               </select>

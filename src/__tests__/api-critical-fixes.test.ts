@@ -299,17 +299,17 @@ describe("C4: Purchase Order PUT - invalid date validation", () => {
     expect(body.error).toContain("issueDate");
   });
 
-  it("returns 400 for invalid expectedDate (garbage string)", async () => {
-    const req = makeRequest({ expectedDate: "garbage" });
+  it("returns 400 for invalid dueDate (garbage string)", async () => {
+    const req = makeRequest({ dueDate: "garbage" });
     const res = await purchaseOrderPUT(req, { params: Promise.resolve({ id: "po-1" }) });
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain("expectedDate");
+    expect(body.error).toContain("dueDate");
   });
 
-  it("rejects null expectedDate (Zod requires string or undefined, not null)", async () => {
-    const req = makeRequest({ expectedDate: null });
+  it("rejects null dueDate (Zod requires string or undefined, not null)", async () => {
+    const req = makeRequest({ dueDate: null });
     const res = await purchaseOrderPUT(req, { params: Promise.resolve({ id: "po-1" }) });
 
     // null fails Zod string validation - clients should omit the field or send ""
@@ -317,7 +317,7 @@ describe("C4: Purchase Order PUT - invalid date validation", () => {
   });
 
   it("accepts valid date strings", async () => {
-    const req = makeRequest({ issueDate: "2026-03-01", expectedDate: "2026-04-01" });
+    const req = makeRequest({ issueDate: "2026-03-01", dueDate: "2026-04-01" });
     const res = await purchaseOrderPUT(req, { params: Promise.resolve({ id: "po-1" }) });
 
     expect(res.status).toBe(200);

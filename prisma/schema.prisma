@@ -3,65 +3,72 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
   id       String  @id @default(cuid())
   email    String  @unique
-  password String  // bcrypt hashed
-  name     String?
-  role     String  @default("user") // user, admin
+  password String  @db.VarChar(255) // bcrypt hashed
+  name     String? @db.VarChar(200)
+  role     String  @default("user") @db.VarChar(20) // user, admin
 
   sessions Session[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([email])
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionToken String   @unique @db.VarChar(500)
+  expires      DateTime
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([sessionToken])
 }
 
 model Customer {
   id          String   @id @default(cuid())
-  name        String   // company name
-  contactName String?  // primary contact person
-  email       String?
-  phone       String?
-  address   String?
-  city      String?
-  state     String?
-  zip       String?
-  country   String   @default("US")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  companyName String   @db.VarChar(200)
+  contactName String?  @db.VarChar(200)
+  email       String?  @db.VarChar(254)
+  phone       String?  @db.VarChar(30)
+  address     String?  @db.VarChar(500)
+  city        String?  @db.VarChar(100)
+  state       String?  @db.VarChar(100)
+  zip         String?  @db.VarChar(20)
+  country     String   @default("US") @db.VarChar(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   invoices       Invoice[]
   purchaseOrders PurchaseOrder[]
+
+  @@index([companyName])
+  @@index([email])
 }
 
 model Invoice {
   id            String        @id @default(cuid())
-  invoiceNumber String        @unique
-  status        String        @default("draft") // draft, sent, paid, overdue, cancelled
+  invoiceNumber String        @unique @db.VarChar(50)
+  status        String        @default("draft") @db.VarChar(20) // draft, sent, paid, overdue, cancelled
   issueDate     DateTime      @default(now())
   dueDate       DateTime
   subtotal      Float         @default(0)
   taxRate       Float         @default(0)
   taxAmount     Float         @default(0)
   total         Float         @default(0)
-  notes         String?
-  terms         String?
+  notes         String?       @db.Text
+  terms         String?       @db.Text
   customerId    String
   customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lineItems     LineItem[]
@@ -73,20 +80,21 @@ model Invoice {
   @@index([customerId])
   @@index([dueDate])
   @@index([createdAt])
+  @@index([invoiceNumber])
 }
 
 model PurchaseOrder {
   id            String         @id @default(cuid())
-  poNumber      String         @unique
-  status        String         @default("draft") // draft, submitted, approved, received, cancelled
+  poNumber      String         @unique @db.VarChar(50)
+  status        String         @default("draft") @db.VarChar(20) // draft, submitted, approved, received, cancelled
   issueDate     DateTime       @default(now())
-  expectedDate  DateTime?
+  dueDate       DateTime?
   subtotal      Float          @default(0)
   taxRate       Float          @default(0)
   taxAmount     Float          @default(0)
   total         Float          @default(0)
-  notes         String?
-  terms         String?
+  notes         String?        @db.Text
+  terms         String?        @db.Text
   customerId    String
   customer      Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lineItems     POLineItem[]
@@ -96,28 +104,31 @@ model PurchaseOrder {
   @@index([status])
   @@index([customerId])
   @@index([createdAt])
+  @@index([poNumber])
 }
 
 model LineItem {
-  id          String  @id @default(cuid())
-  description String
+  id          String   @id @default(cuid())
+  description String   @db.VarChar(500)
   quantity    Float
   unitPrice   Float
-  amount      Float
+  total       Float
   invoiceId   String
-  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 
   @@index([invoiceId])
 }
 
 model POLineItem {
   id              String        @id @default(cuid())
-  description     String
+  description     String        @db.VarChar(500)
   quantity        Float
   unitPrice       Float
-  amount          Float
+  total           Float
   purchaseOrderId String
   purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
 
   @@index([purchaseOrderId])
 }
@@ -127,13 +138,12 @@ model Payment {
   invoiceId String
   invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   amount    Float
-  paymentDate DateTime
-  method    String   // cash, check, credit_card, bank_transfer, other
-  notes     String?
+  method    String   @db.VarChar(30) // cash, check, credit_card, bank_transfer, other
+  date      DateTime
+  notes     String?  @db.Text
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@index([invoiceId])
-  @@index([paymentDate])
+  @@index([date])
 }

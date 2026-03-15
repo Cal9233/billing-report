@@ -13,7 +13,7 @@ interface PurchaseOrder {
   poNumber: string;
   status: string;
   issueDate: string;
-  expectedDate: string | null;
+  dueDate: string | null;
   subtotal: number;
   taxRate: number;
   taxAmount: number;
@@ -22,7 +22,7 @@ interface PurchaseOrder {
   terms: string | null;
   customer: {
     id: string;
-    name: string;
+    companyName: string;
     email: string | null;
     address: string | null;
     city: string | null;
@@ -34,7 +34,7 @@ interface PurchaseOrder {
     description: string;
     quantity: number;
     unitPrice: number;
-    amount: number;
+    total: number;
   }[];
 }
 
@@ -104,7 +104,7 @@ export default function PODetailPage() {
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
               Issued {formatDate(po.issueDate)}
-              {po.expectedDate && ` · Expected ${formatDate(po.expectedDate)}`}
+              {po.dueDate && ` · Due ${formatDate(po.dueDate)}`}
             </p>
           </div>
         </div>
@@ -143,9 +143,9 @@ export default function PODetailPage() {
             <p className="text-sm text-muted-foreground">
               Issue Date: {formatDate(po.issueDate)}
             </p>
-            {po.expectedDate && (
+            {po.dueDate && (
               <p className="text-sm text-muted-foreground">
-                Expected: {formatDate(po.expectedDate)}
+                Due: {formatDate(po.dueDate)}
               </p>
             )}
           </div>
@@ -160,7 +160,7 @@ export default function PODetailPage() {
           <p className="text-xs text-muted-foreground mb-1 font-semibold uppercase tracking-wide">
             Vendor
           </p>
-          <p className="font-semibold text-base">{po.customer.name}</p>
+          <p className="font-semibold text-base">{po.customer.companyName}</p>
           {po.customer.email && (
             <p className="text-sm text-muted-foreground">{po.customer.email}</p>
           )}
@@ -203,7 +203,7 @@ export default function PODetailPage() {
                   {formatCurrency(item.unitPrice)}
                 </td>
                 <td className="py-3 text-sm text-right font-medium">
-                  {formatCurrency(item.amount)}
+                  {formatCurrency(item.total)}
                 </td>
               </tr>
             ))}

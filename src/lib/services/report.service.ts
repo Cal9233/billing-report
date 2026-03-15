@@ -58,7 +58,7 @@ export async function generateReport(): Promise<ReportData> {
         issueDate: true,
         total: true,
         customerId: true,
-        customer: { select: { id: true, name: true } },
+        customer: { select: { id: true, companyName: true } },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -70,12 +70,12 @@ export async function generateReport(): Promise<ReportData> {
         issueDate: true,
         total: true,
         customerId: true,
-        customer: { select: { id: true, name: true } },
+        customer: { select: { id: true, companyName: true } },
       },
       orderBy: { createdAt: "desc" },
     }),
     prisma.customer.findMany({
-      select: { id: true, name: true },
+      select: { id: true, companyName: true },
     }),
     prisma.customer.count(),
   ]);
@@ -151,7 +151,7 @@ export async function generateReport(): Promise<ReportData> {
       );
       return {
         id: c.id,
-        name: c.name,
+        name: c.companyName,
         invoiceCount: custInvoices.length,
         totalRevenue: custInvoices.reduce((sum, i) => sum + i.total, 0),
       };
@@ -163,7 +163,7 @@ export async function generateReport(): Promise<ReportData> {
   const recentInvoices: RecentActivity[] = invoices.slice(0, 5).map((i) => ({
     id: i.id,
     number: i.invoiceNumber,
-    customer: i.customer.name,
+    customer: i.customer.companyName,
     total: i.total,
     status: i.status,
     date: i.issueDate,
@@ -172,7 +172,7 @@ export async function generateReport(): Promise<ReportData> {
   const recentPOs: RecentActivity[] = purchaseOrders.slice(0, 5).map((p) => ({
     id: p.id,
     number: p.poNumber,
-    customer: p.customer.name,
+    customer: p.customer.companyName,
     total: p.total,
     status: p.status,
     date: p.issueDate,

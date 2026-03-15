@@ -22,7 +22,7 @@ export async function listInvoices(
     prisma.invoice.findMany({
       where,
       include: {
-        customer: { select: { id: true, name: true, email: true } },
+        customer: { select: { id: true, companyName: true, email: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (validPage - 1) * validLimit,
@@ -99,7 +99,7 @@ export async function createInvoice(data: InvoiceCreateInput) {
               description: item.description,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
-              amount: calculateLineItemAmount(item.quantity, item.unitPrice),
+              total: calculateLineItemAmount(item.quantity, item.unitPrice),
             })),
           },
         },
@@ -187,7 +187,7 @@ export async function updateInvoice(id: string, data: Partial<InvoiceUpdateInput
               description: item.description,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
-              amount: calculateLineItemAmount(item.quantity, item.unitPrice),
+              total: calculateLineItemAmount(item.quantity, item.unitPrice),
             })),
           },
         },

@@ -187,8 +187,8 @@ function makeInvoiceFixture(overrides: Record<string, unknown> = {}) {
     notes: null,
     terms: null,
     customerId: "cust-1",
-    customer: { id: "cust-1", name: "Acme Corp", email: null },
-    lineItems: [{ id: "li-1", description: "Item", quantity: 1, unitPrice: 100, amount: 100 }],
+    customer: { id: "cust-1", companyName: "Acme Corp", email: null },
+    lineItems: [{ id: "li-1", description: "Item", quantity: 1, unitPrice: 100, total: 100 }],
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -201,7 +201,7 @@ function makePOFixture(overrides: Record<string, unknown> = {}) {
     poNumber: "PO-202603-001",
     status: "draft",
     issueDate: new Date("2026-03-01"),
-    expectedDate: null,
+    dueDate: null,
     subtotal: 500,
     taxRate: 0,
     taxAmount: 0,
@@ -209,8 +209,8 @@ function makePOFixture(overrides: Record<string, unknown> = {}) {
     notes: null,
     terms: null,
     customerId: "cust-1",
-    customer: { id: "cust-1", name: "Acme Corp", email: null },
-    lineItems: [{ id: "pli-1", description: "Part", quantity: 5, unitPrice: 100, amount: 500 }],
+    customer: { id: "cust-1", companyName: "Acme Corp", email: null },
+    lineItems: [{ id: "pli-1", description: "Part", quantity: 5, unitPrice: 100, total: 500 }],
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -220,7 +220,7 @@ function makePOFixture(overrides: Record<string, unknown> = {}) {
 function makeCustomerFixture(overrides: Record<string, unknown> = {}) {
   return {
     id: "cust-1",
-    name: "Acme Corp",
+    companyName: "Acme Corp",
     email: null,
     phone: null,
     address: null,
@@ -247,7 +247,7 @@ const VALID_INVOICE_BODY = {
 const VALID_PO_BODY = {
   customerId: "cust-1",
   issueDate: "2026-03-01",
-  expectedDate: "2026-04-15",
+  dueDate: "2026-04-15",
   taxRate: 5,
   status: "draft" as const,
   lineItems: [{ description: "Component", quantity: 10, unitPrice: 25 }],
@@ -821,11 +821,11 @@ describe("Purchase Orders POST /api/purchase-orders — creation", () => {
     expect(res.status).toBe(201);
   });
 
-  it("PO without expectedDate is valid", async () => {
+  it("PO without dueDate is valid", async () => {
     mockCustomerFindUnique.mockResolvedValueOnce({ id: "cust-1" });
-    mockPOCreate.mockResolvedValueOnce(makePOFixture({ expectedDate: null }));
+    mockPOCreate.mockResolvedValueOnce(makePOFixture({ dueDate: null }));
 
-    const { expectedDate: _, ...bodyWithoutDate } = VALID_PO_BODY;
+    const { dueDate: _, ...bodyWithoutDate } = VALID_PO_BODY;
     const res = await poPOST(makeRequest(`${BASE}/api/purchase-orders`, bodyWithoutDate, "POST"));
     expect(res.status).toBe(201);
   });
@@ -1005,19 +1005,19 @@ describe("Purchase Order PUT /api/purchase-orders/[id]", () => {
     expect(body.error).toContain("issueDate");
   });
 
-  it("invalid expectedDate → 400", async () => {
+  it("invalid dueDate → 400", async () => {
     const res = await poPUT(
-      makeRequest(`${BASE}/api/purchase-orders/po-1`, { expectedDate: "garbage" }, "PUT"),
+      makeRequest(`${BASE}/api/purchase-orders/po-1`, { dueDate: "garbage" }, "PUT"),
       { params: Promise.resolve({ id: "po-1" }) }
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain("expectedDate");
+    expect(body.error).toContain("dueDate");
   });
 
-  it("null expectedDate → 400 (Zod requires string or undefined, not null)", async () => {
+  it("null dueDate → 400 (Zod requires string or undefined, not null)", async () => {
     const res = await poPUT(
-      makeRequest(`${BASE}/api/purchase-orders/po-1`, { expectedDate: null }, "PUT"),
+      makeRequest(`${BASE}/api/purchase-orders/po-1`, { dueDate: null }, "PUT"),
       { params: Promise.resolve({ id: "po-1" }) }
     );
     expect(res.status).toBe(400);
@@ -1128,7 +1128,7 @@ describe("Customers POST /api/customers", () => {
 
   it("create with all fields returns 201", async () => {
     const fullCustomer = {
-      name: "Dual Aero Inc",
+      companyName: "Dual Aero Inc",
       email: "billing@dualaero.com",
       phone: "555-0100",
       address: "123 Runway Blvd",
@@ -1146,10 +1146,10 @@ describe("Customers POST /api/customers", () => {
   });
 
   it("create with only name (minimal fields) returns 201", async () => {
-    mockCustomerCreate.mockResolvedValueOnce({ id: "cust-new", name: "Minimal Corp", country: "US" });
+    mockCustomerCreate.mockResolvedValueOnce({ id: "cust-new", companyName: "Minimal Corp", country: "US" });
 
     const res = await customerPOST(
-      makeRequest(`${BASE}/api/customers`, { name: "Minimal Corp" }, "POST")
+      makeRequest(`${BASE}/api/customers`, { companyName: "Minimal Corp" }, "POST")
     );
     expect(res.status).toBe(201);
   });
@@ -1163,23 +1163,23 @@ describe("Customers POST /api/customers", () => {
 
   it("empty name → 400 (min 1)", async () => {
     const res = await customerPOST(
-      makeRequest(`${BASE}/api/customers`, { name: "" }, "POST")
+      makeRequest(`${BASE}/api/customers`, { companyName: "" }, "POST")
     );
     expect(res.status).toBe(400);
   });
 
   it("invalid email format → 400", async () => {
     const res = await customerPOST(
-      makeRequest(`${BASE}/api/customers`, { name: "Test Co", email: "not-an-email" }, "POST")
+      makeRequest(`${BASE}/api/customers`, { companyName: "Test Co", email: "not-an-email" }, "POST")
     );
     expect(res.status).toBe(400);
   });
 
   it("empty string email is accepted (email OR empty literal)", async () => {
-    mockCustomerCreate.mockResolvedValueOnce({ id: "cust-new", name: "Test Co", email: "" });
+    mockCustomerCreate.mockResolvedValueOnce({ id: "cust-new", companyName: "Test Co", email: "" });
 
     const res = await customerPOST(
-      makeRequest(`${BASE}/api/customers`, { name: "Test Co", email: "" }, "POST")
+      makeRequest(`${BASE}/api/customers`, { companyName: "Test Co", email: "" }, "POST")
     );
     expect(res.status).toBe(201);
   });
@@ -1188,27 +1188,27 @@ describe("Customers POST /api/customers", () => {
     const longName = "A".repeat(500);
 
     const res = await customerPOST(
-      makeRequest(`${BASE}/api/customers`, { name: longName }, "POST")
+      makeRequest(`${BASE}/api/customers`, { companyName: longName }, "POST")
     );
     expect(res.status).toBe(400);
   });
 
   it("name at max length (200 chars) is accepted by Zod", async () => {
     const maxName = "A".repeat(200);
-    mockCustomerCreate.mockResolvedValueOnce({ id: "cust-new", name: maxName });
+    mockCustomerCreate.mockResolvedValueOnce({ id: "cust-new", companyName: maxName });
 
     const res = await customerPOST(
-      makeRequest(`${BASE}/api/customers`, { name: maxName }, "POST")
+      makeRequest(`${BASE}/api/customers`, { companyName: maxName }, "POST")
     );
     expect(res.status).toBe(201);
   });
 
   it("duplicate customer creation (P2002 on name uniqueness if constrained) — documents behavior", async () => {
     // Customer model has no unique constraint on name — duplicates are allowed
-    mockCustomerCreate.mockResolvedValueOnce({ id: "cust-new2", name: "Acme Corp", country: "US" });
+    mockCustomerCreate.mockResolvedValueOnce({ id: "cust-new2", companyName: "Acme Corp", country: "US" });
 
     const res = await customerPOST(
-      makeRequest(`${BASE}/api/customers`, { name: "Acme Corp" }, "POST")
+      makeRequest(`${BASE}/api/customers`, { companyName: "Acme Corp" }, "POST")
     );
     // Duplicates are allowed at DB level — returns 201
     expect(res.status).toBe(201);
@@ -1251,16 +1251,16 @@ describe("Customer PUT /api/customers/[id]", () => {
 
 
   it("update name returns 200", async () => {
-    const updated = makeCustomerFixture({ name: "New Name Corp" });
+    const updated = makeCustomerFixture({ companyName: "New Name Corp" });
     mockCustomerUpdate.mockResolvedValueOnce(updated);
 
     const res = await customerPUT(
-      makeRequest(`${BASE}/api/customers/cust-1`, { name: "New Name Corp" }, "PUT"),
+      makeRequest(`${BASE}/api/customers/cust-1`, { companyName: "New Name Corp" }, "PUT"),
       { params: Promise.resolve({ id: "cust-1" }) }
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.name).toBe("New Name Corp");
+    expect(body.companyName).toBe("New Name Corp");
   });
 
   it("update email returns 200", async () => {
@@ -1296,7 +1296,7 @@ describe("Customer PUT /api/customers/[id]", () => {
     mockCustomerUpdate.mockRejectedValueOnce(makePrismaError("P2025"));
 
     const res = await customerPUT(
-      makeRequest(`${BASE}/api/customers/ghost`, { name: "Foo" }, "PUT"),
+      makeRequest(`${BASE}/api/customers/ghost`, { companyName: "Foo" }, "PUT"),
       { params: Promise.resolve({ id: "ghost" }) }
     );
     expect(res.status).toBe(404);

@@ -19,19 +19,20 @@ import {
 
 interface Customer {
   id: string;
-  name: string;
+  companyName: string;
   email: string | null;
   phone: string | null;
   address: string | null;
   city: string | null;
   state: string | null;
   zip: string | null;
+  country: string | null;
   contactName?: string | null;
   _count: { invoices: number; purchaseOrders: number };
 }
 
 const emptyForm = {
-  name: "",
+  companyName: "",
   contactName: "",
   email: "",
   phone: "",
@@ -39,6 +40,7 @@ const emptyForm = {
   city: "",
   state: "",
   zip: "",
+  country: "",
 };
 
 export default function CustomersPage() {
@@ -74,7 +76,7 @@ export default function CustomersPage() {
   const openEditForm = (customer: Customer) => {
     setEditingId(customer.id);
     setFormData({
-      name: customer.name,
+      companyName: customer.companyName,
       contactName: customer.contactName ?? "",
       email: customer.email ?? "",
       phone: customer.phone ?? "",
@@ -82,6 +84,7 @@ export default function CustomersPage() {
       city: customer.city ?? "",
       state: customer.state ?? "",
       zip: customer.zip ?? "",
+      country: customer.country ?? "",
     });
     setFormError(null);
     setShowForm(true);
@@ -97,7 +100,7 @@ export default function CustomersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
+    if (!formData.companyName.trim()) {
       setFormError("Company name is required.");
       return;
     }
@@ -124,8 +127,8 @@ export default function CustomersPage() {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete customer "${name}"? This cannot be undone.`)) return;
+  const handleDelete = async (id: string, companyName: string) => {
+    if (!confirm(`Delete customer "${companyName}"? This cannot be undone.`)) return;
     try {
       await fetch(`/api/customers/${id}`, { method: "DELETE" });
       setCustomers((prev) => prev.filter((c) => c.id !== id));
@@ -137,7 +140,7 @@ export default function CustomersPage() {
   const filtered = search
     ? customers.filter(
         (c) =>
-          c.name.toLowerCase().includes(search.toLowerCase()) ||
+          c.companyName.toLowerCase().includes(search.toLowerCase()) ||
           (c.email ?? "").toLowerCase().includes(search.toLowerCase()) ||
           (c.phone ?? "").toLowerCase().includes(search.toLowerCase()),
       )
@@ -201,9 +204,9 @@ export default function CustomersPage() {
                 </label>
                 <Input
                   id="cust-name"
-                  value={formData.name}
+                  value={formData.companyName}
                   onChange={(e) =>
-                    setFormData((p) => ({ ...p, name: e.target.value }))
+                    setFormData((p) => ({ ...p, companyName: e.target.value }))
                   }
                   placeholder="e.g., ABC Tire Company"
                   required
@@ -326,6 +329,22 @@ export default function CustomersPage() {
                 </div>
               </div>
             </div>
+              <div>
+                <label
+                  htmlFor="cust-country"
+                  className="block text-sm font-semibold text-foreground mb-1.5"
+                >
+                  Country
+                </label>
+                <Input
+                  id="cust-country"
+                  value={formData.country}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, country: e.target.value }))
+                  }
+                  placeholder="US"
+                />
+              </div>
             <div className="flex items-center justify-end gap-3 pt-2 border-t border-border">
               <Button type="button" variant="outline" onClick={closeForm}>
                 Cancel
@@ -400,7 +419,7 @@ export default function CustomersPage() {
               <div className="flex items-start justify-between mb-3">
                 <div className="min-w-0 flex-1 pr-2">
                   <h3 className="font-semibold text-base text-foreground truncate">
-                    {customer.name}
+                    {customer.companyName}
                   </h3>
                   {customer.contactName && (
                     <p className="text-sm text-muted-foreground mt-0.5">
@@ -411,14 +430,14 @@ export default function CustomersPage() {
                 <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => openEditForm(customer)}
-                    aria-label={`Edit ${customer.name}`}
+                    aria-label={`Edit ${customer.companyName}`}
                     className="p-1.5 text-muted-foreground hover:text-primary hover:bg-blue-50 rounded-lg transition-colors"
                   >
                     <Edit2 className="h-3.5 w-3.5" />
                   </button>
                   <button
-                    onClick={() => handleDelete(customer.id, customer.name)}
-                    aria-label={`Delete ${customer.name}`}
+                    onClick={() => handleDelete(customer.id, customer.companyName)}
+                    aria-label={`Delete ${customer.companyName}`}
                     className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

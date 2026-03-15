@@ -12,9 +12,9 @@ interface PurchaseOrder {
   poNumber: string;
   status: string;
   issueDate: string;
-  expectedDate: string | null;
+  dueDate: string | null;
   total: number;
-  customer: { id: string; name: string; email: string | null };
+  customer: { id: string; companyName: string; email: string | null };
 }
 
 export default function PurchaseOrdersPage() {
@@ -59,7 +59,7 @@ export default function PurchaseOrdersPage() {
     ? orders.filter(
         (po) =>
           po.poNumber.toLowerCase().includes(search.toLowerCase()) ||
-          po.customer.name.toLowerCase().includes(search.toLowerCase()),
+          po.customer.companyName.toLowerCase().includes(search.toLowerCase()),
       )
     : orders;
 
@@ -201,7 +201,7 @@ export default function PurchaseOrdersPage() {
                     scope="col"
                     className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide"
                   >
-                    Expected
+                    Due Date
                   </th>
                   <th
                     scope="col"
@@ -232,7 +232,7 @@ export default function PurchaseOrdersPage() {
                       </Link>
                     </td>
                     <td className="py-4 px-4 text-sm text-foreground">
-                      {po.customer.name}
+                      {po.customer.companyName}
                     </td>
                     <td className="py-4 px-4">
                       <StatusBadge status={po.status} />
@@ -241,7 +241,7 @@ export default function PurchaseOrdersPage() {
                       {formatDate(po.issueDate)}
                     </td>
                     <td className="py-4 px-4 text-sm text-muted-foreground">
-                      {po.expectedDate ? formatDate(po.expectedDate) : "—"}
+                      {po.dueDate ? formatDate(po.dueDate) : "—"}
                     </td>
                     <td className="py-4 px-6 text-sm text-right font-semibold text-foreground tabular-nums">
                       {formatCurrency(po.total)}

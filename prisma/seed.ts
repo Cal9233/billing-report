@@ -6,7 +6,7 @@ async function main() {
   // Create sample customers
   const customer1 = await prisma.customer.create({
     data: {
-      name: "Acme Corporation",
+      companyName: "Acme Corporation",
       email: "billing@acme.com",
       phone: "555-0100",
       address: "100 Main Street",
@@ -18,7 +18,7 @@ async function main() {
 
   const customer2 = await prisma.customer.create({
     data: {
-      name: "TechStart Solutions",
+      companyName: "TechStart Solutions",
       email: "accounts@techstart.io",
       phone: "555-0200",
       address: "200 Innovation Dr",
@@ -30,7 +30,7 @@ async function main() {
 
   const customer3 = await prisma.customer.create({
     data: {
-      name: "Global Industries Ltd",
+      companyName: "Global Industries Ltd",
       email: "procurement@globalind.com",
       phone: "555-0300",
       address: "300 Commerce Blvd",
@@ -56,8 +56,8 @@ async function main() {
       customerId: customer1.id,
       lineItems: {
         create: [
-          { description: "Web Development Services", quantity: 40, unitPrice: 100, amount: 4000 },
-          { description: "UI/UX Design Consultation", quantity: 10, unitPrice: 100, amount: 1000 },
+          { description: "Web Development Services", quantity: 40, unitPrice: 100, total: 4000 },
+          { description: "UI/UX Design Consultation", quantity: 10, unitPrice: 100, total: 1000 },
         ],
       },
     },
@@ -77,9 +77,9 @@ async function main() {
       customerId: customer2.id,
       lineItems: {
         create: [
-          { description: "Cloud Infrastructure Setup", quantity: 1, unitPrice: 7500, amount: 7500 },
-          { description: "Monthly Maintenance (3 months)", quantity: 3, unitPrice: 1500, amount: 4500 },
-          { description: "SSL Certificate", quantity: 1, unitPrice: 500, amount: 500 },
+          { description: "Cloud Infrastructure Setup", quantity: 1, unitPrice: 7500, total: 7500 },
+          { description: "Monthly Maintenance (3 months)", quantity: 3, unitPrice: 1500, total: 4500 },
+          { description: "SSL Certificate", quantity: 1, unitPrice: 500, total: 500 },
         ],
       },
     },
@@ -99,8 +99,8 @@ async function main() {
       customerId: customer3.id,
       lineItems: {
         create: [
-          { description: "Data Analysis Report", quantity: 1, unitPrice: 2000, amount: 2000 },
-          { description: "Follow-up Consultation", quantity: 4, unitPrice: 300, amount: 1200 },
+          { description: "Data Analysis Report", quantity: 1, unitPrice: 2000, total: 2000 },
+          { description: "Follow-up Consultation", quantity: 4, unitPrice: 300, total: 1200 },
         ],
       },
     },
@@ -119,8 +119,8 @@ async function main() {
       customerId: customer1.id,
       lineItems: {
         create: [
-          { description: "API Development", quantity: 50, unitPrice: 125, amount: 6250 },
-          { description: "Database Optimization", quantity: 10, unitPrice: 250, amount: 2500 },
+          { description: "API Development", quantity: 50, unitPrice: 125, total: 6250 },
+          { description: "Database Optimization", quantity: 10, unitPrice: 250, total: 2500 },
         ],
       },
     },
@@ -132,7 +132,7 @@ async function main() {
       poNumber: "PO-202603-0001",
       status: "approved",
       issueDate: new Date("2026-03-05"),
-      expectedDate: new Date("2026-03-20"),
+      dueDate: new Date("2026-03-20"),
       subtotal: 2400,
       taxRate: 8.5,
       taxAmount: 204,
@@ -141,7 +141,7 @@ async function main() {
       customerId: customer2.id,
       lineItems: {
         create: [
-          { description: "Server Hardware - Dell R750", quantity: 2, unitPrice: 1200, amount: 2400 },
+          { description: "Server Hardware - Dell R750", quantity: 2, unitPrice: 1200, total: 2400 },
         ],
       },
     },
@@ -152,7 +152,7 @@ async function main() {
       poNumber: "PO-202603-0002",
       status: "submitted",
       issueDate: new Date("2026-03-12"),
-      expectedDate: new Date("2026-04-01"),
+      dueDate: new Date("2026-04-01"),
       subtotal: 6800,
       taxRate: 0,
       taxAmount: 0,
@@ -160,8 +160,8 @@ async function main() {
       customerId: customer3.id,
       lineItems: {
         create: [
-          { description: "Software Licenses - Annual", quantity: 20, unitPrice: 240, amount: 4800 },
-          { description: "Support Package", quantity: 1, unitPrice: 2000, amount: 2000 },
+          { description: "Software Licenses - Annual", quantity: 20, unitPrice: 240, total: 4800 },
+          { description: "Support Package", quantity: 1, unitPrice: 2000, total: 2000 },
         ],
       },
     },
@@ -172,7 +172,7 @@ async function main() {
       poNumber: "PO-202602-0003",
       status: "received",
       issueDate: new Date("2026-02-15"),
-      expectedDate: new Date("2026-03-01"),
+      dueDate: new Date("2026-03-01"),
       subtotal: 950,
       taxRate: 8.5,
       taxAmount: 80.75,
@@ -180,8 +180,8 @@ async function main() {
       customerId: customer1.id,
       lineItems: {
         create: [
-          { description: "Office Supplies Bulk Order", quantity: 1, unitPrice: 450, amount: 450 },
-          { description: "Printer Toner Cartridges", quantity: 5, unitPrice: 100, amount: 500 },
+          { description: "Office Supplies Bulk Order", quantity: 1, unitPrice: 450, total: 450 },
+          { description: "Printer Toner Cartridges", quantity: 5, unitPrice: 100, total: 500 },
         ],
       },
     },

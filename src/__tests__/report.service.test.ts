@@ -32,7 +32,7 @@ function makeInvoice(overrides: {
   issueDate: Date;
   total: number;
   customerId: string;
-  customer: { id: string; name: string };
+  customer: { id: string; companyName: string };
 }) {
   return {
     ...overrides,
@@ -55,11 +55,11 @@ function makePO(overrides: {
   issueDate: Date;
   total: number;
   customerId: string;
-  customer: { id: string; name: string };
+  customer: { id: string; companyName: string };
 }) {
   return {
     ...overrides,
-    expectedDate: null,
+    dueDate: null,
     subtotal: overrides.total,
     taxRate: 0,
     taxAmount: 0,
@@ -71,7 +71,7 @@ function makePO(overrides: {
 }
 
 /** Build a minimal Customer mock with all required schema fields. */
-function makeCustomer(overrides: { id: string; name: string }) {
+function makeCustomer(overrides: { id: string; companyName: string }) {
   return {
     ...overrides,
     contactName: null,
@@ -120,7 +120,7 @@ describe("Report Service", () => {
           issueDate: new Date("2024-01-15"),
           total: 1000,
           customerId: "cust1",
-          customer: { id: "cust1", name: "Customer A" },
+          customer: { id: "cust1", companyName: "Customer A" },
         }),
         makeInvoice({
           id: "inv2",
@@ -129,7 +129,7 @@ describe("Report Service", () => {
           issueDate: new Date("2024-02-20"),
           total: 500,
           customerId: "cust1",
-          customer: { id: "cust1", name: "Customer A" },
+          customer: { id: "cust1", companyName: "Customer A" },
         }),
         makeInvoice({
           id: "inv3",
@@ -138,7 +138,7 @@ describe("Report Service", () => {
           issueDate: new Date("2024-03-10"),
           total: 750,
           customerId: "cust2",
-          customer: { id: "cust2", name: "Customer B" },
+          customer: { id: "cust2", companyName: "Customer B" },
         }),
       ];
 
@@ -167,7 +167,7 @@ describe("Report Service", () => {
           issueDate: new Date("2024-01-10"),
           total: 5000,
           customerId: "vendor1",
-          customer: { id: "vendor1", name: "Vendor A" },
+          customer: { id: "vendor1", companyName: "Vendor A" },
         }),
         makePO({
           id: "po2",
@@ -176,7 +176,7 @@ describe("Report Service", () => {
           issueDate: new Date("2024-02-15"),
           total: 3000,
           customerId: "vendor1",
-          customer: { id: "vendor1", name: "Vendor A" },
+          customer: { id: "vendor1", companyName: "Vendor A" },
         }),
       ];
 
@@ -202,7 +202,7 @@ describe("Report Service", () => {
           issueDate: new Date("2024-01-15"),
           total: 1000,
           customerId: "cust1",
-          customer: { id: "cust1", name: "Customer A" },
+          customer: { id: "cust1", companyName: "Customer A" },
         }),
         makeInvoice({
           id: "inv2",
@@ -211,7 +211,7 @@ describe("Report Service", () => {
           issueDate: new Date("2024-01-20"),
           total: 500,
           customerId: "cust1",
-          customer: { id: "cust1", name: "Customer A" },
+          customer: { id: "cust1", companyName: "Customer A" },
         }),
         makeInvoice({
           id: "inv3",
@@ -220,13 +220,13 @@ describe("Report Service", () => {
           issueDate: new Date("2024-02-10"),
           total: 2000,
           customerId: "cust2",
-          customer: { id: "cust2", name: "Customer B" },
+          customer: { id: "cust2", companyName: "Customer B" },
         }),
       ];
 
       const mockCustomers = [
-        makeCustomer({ id: "cust1", name: "Customer A" }),
-        makeCustomer({ id: "cust2", name: "Customer B" }),
+        makeCustomer({ id: "cust1", companyName: "Customer A" }),
+        makeCustomer({ id: "cust2", companyName: "Customer B" }),
       ];
 
       vi.mocked(prisma.invoice.findMany).mockResolvedValue(mockInvoices);
@@ -254,12 +254,12 @@ describe("Report Service", () => {
           issueDate: new Date("2024-01-15"),
           total: 100 * (i + 1),
           customerId: `cust${i}`,
-          customer: { id: `cust${i}`, name: `Customer ${i}` },
+          customer: { id: `cust${i}`, companyName: `Customer ${i}` },
         })
       );
 
       const mockCustomers = Array.from({ length: 15 }, (_, i) =>
-        makeCustomer({ id: `cust${i}`, name: `Customer ${i}` })
+        makeCustomer({ id: `cust${i}`, companyName: `Customer ${i}` })
       );
 
       vi.mocked(prisma.invoice.findMany).mockResolvedValue(mockInvoices);
@@ -303,7 +303,7 @@ describe("Report Service", () => {
           issueDate: currentMonth,
           total: 1000,
           customerId: "cust1",
-          customer: { id: "cust1", name: "Customer A" },
+          customer: { id: "cust1", companyName: "Customer A" },
         }),
       ];
 
@@ -315,7 +315,7 @@ describe("Report Service", () => {
           issueDate: currentMonth,
           total: 5000,
           customerId: "vendor1",
-          customer: { id: "vendor1", name: "Vendor A" },
+          customer: { id: "vendor1", companyName: "Vendor A" },
         }),
       ];
 
@@ -341,7 +341,7 @@ describe("Report Service", () => {
           issueDate: new Date(`2024-0${Math.floor(i / 3) + 1}-15`),
           total: 100 * (i + 1),
           customerId: "cust1",
-          customer: { id: "cust1", name: "Customer A" },
+          customer: { id: "cust1", companyName: "Customer A" },
         })
       );
 
@@ -366,7 +366,7 @@ describe("Report Service", () => {
           issueDate: new Date(`2024-0${Math.floor(i / 3) + 1}-10`),
           total: 500 * (i + 1),
           customerId: "vendor1",
-          customer: { id: "vendor1", name: "Vendor A" },
+          customer: { id: "vendor1", companyName: "Vendor A" },
         })
       );
 
@@ -391,7 +391,7 @@ describe("Report Service", () => {
           issueDate: new Date(),
           total: 100,
           customerId: "cust1",
-          customer: { id: "cust1", name: "Customer A" },
+          customer: { id: "cust1", companyName: "Customer A" },
         }),
         makeInvoice({
           id: "inv2",
@@ -400,7 +400,7 @@ describe("Report Service", () => {
           issueDate: new Date(),
           total: 200,
           customerId: "cust1",
-          customer: { id: "cust1", name: "Customer A" },
+          customer: { id: "cust1", companyName: "Customer A" },
         }),
         makeInvoice({
           id: "inv3",
@@ -409,7 +409,7 @@ describe("Report Service", () => {
           issueDate: new Date(),
           total: 300,
           customerId: "cust1",
-          customer: { id: "cust1", name: "Customer A" },
+          customer: { id: "cust1", companyName: "Customer A" },
         }),
         makeInvoice({
           id: "inv4",
@@ -418,7 +418,7 @@ describe("Report Service", () => {
           issueDate: new Date(),
           total: 400,
           customerId: "cust1",
-          customer: { id: "cust1", name: "Customer A" },
+          customer: { id: "cust1", companyName: "Customer A" },
         }),
         makeInvoice({
           id: "inv5",
@@ -427,7 +427,7 @@ describe("Report Service", () => {
           issueDate: new Date(),
           total: 500,
           customerId: "cust1",
-          customer: { id: "cust1", name: "Customer A" },
+          customer: { id: "cust1", companyName: "Customer A" },
         }),
       ];
 
@@ -439,7 +439,7 @@ describe("Report Service", () => {
           issueDate: new Date(),
           total: 1000,
           customerId: "vendor1",
-          customer: { id: "vendor1", name: "Vendor A" },
+          customer: { id: "vendor1", companyName: "Vendor A" },
         }),
         makePO({
           id: "po2",
@@ -448,7 +448,7 @@ describe("Report Service", () => {
           issueDate: new Date(),
           total: 2000,
           customerId: "vendor1",
-          customer: { id: "vendor1", name: "Vendor A" },
+          customer: { id: "vendor1", companyName: "Vendor A" },
         }),
         makePO({
           id: "po3",
@@ -457,7 +457,7 @@ describe("Report Service", () => {
           issueDate: new Date(),
           total: 3000,
           customerId: "vendor1",
-          customer: { id: "vendor1", name: "Vendor A" },
+          customer: { id: "vendor1", companyName: "Vendor A" },
         }),
         makePO({
           id: "po4",
@@ -466,7 +466,7 @@ describe("Report Service", () => {
           issueDate: new Date(),
           total: 4000,
           customerId: "vendor1",
-          customer: { id: "vendor1", name: "Vendor A" },
+          customer: { id: "vendor1", companyName: "Vendor A" },
         }),
         makePO({
           id: "po5",
@@ -475,7 +475,7 @@ describe("Report Service", () => {
           issueDate: new Date(),
           total: 5000,
           customerId: "vendor1",
-          customer: { id: "vendor1", name: "Vendor A" },
+          customer: { id: "vendor1", companyName: "Vendor A" },
         }),
       ];
 

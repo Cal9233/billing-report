@@ -137,10 +137,10 @@ describe("purchaseOrderCreateSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("allows optional expectedDate", () => {
+  it("allows optional dueDate", () => {
     const result = purchaseOrderCreateSchema.safeParse({
       ...validPO,
-      expectedDate: "2026-04-01",
+      dueDate: "2026-04-01",
     });
     expect(result.success).toBe(true);
   });
@@ -163,18 +163,18 @@ describe("purchaseOrderCreateSchema", () => {
 
 describe("customerCreateSchema", () => {
   it("validates with just name", () => {
-    const result = customerCreateSchema.safeParse({ name: "Acme Corp" });
+    const result = customerCreateSchema.safeParse({ companyName: "Acme Corp" });
     expect(result.success).toBe(true);
   });
 
   it("rejects empty name", () => {
-    const result = customerCreateSchema.safeParse({ name: "" });
+    const result = customerCreateSchema.safeParse({ companyName: "" });
     expect(result.success).toBe(false);
   });
 
   it("validates full customer data", () => {
     const result = customerCreateSchema.safeParse({
-      name: "Acme Corp",
+      companyName: "Acme Corp",
       email: "billing@acme.com",
       phone: "555-0100",
       address: "123 Main St",
@@ -188,7 +188,7 @@ describe("customerCreateSchema", () => {
 
   it("rejects invalid email", () => {
     const result = customerCreateSchema.safeParse({
-      name: "Test",
+      companyName: "Test",
       email: "not-an-email",
     });
     expect(result.success).toBe(false);
@@ -196,7 +196,7 @@ describe("customerCreateSchema", () => {
 
   it("allows empty email string", () => {
     const result = customerCreateSchema.safeParse({
-      name: "Test",
+      companyName: "Test",
       email: "",
     });
     expect(result.success).toBe(true);

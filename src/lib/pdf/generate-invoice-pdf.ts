@@ -14,7 +14,7 @@ interface InvoicePDFData {
   notes?: string | null;
   terms?: string | null;
   customer: {
-    name: string;
+    companyName: string;
     email?: string | null;
     address?: string | null;
     city?: string | null;
@@ -25,7 +25,7 @@ interface InvoicePDFData {
     description: string;
     quantity: number;
     unitPrice: number;
-    amount: number;
+    total: number;
   }[];
 }
 
@@ -65,7 +65,7 @@ export function generateInvoicePDF(data: InvoicePDFData): jsPDF {
   doc.text("BILL TO:", 20, 84);
   doc.setFontSize(13);
   doc.setTextColor(0, 0, 0);
-  doc.text(data.customer.name, 20, 93);
+  doc.text(data.customer.companyName, 20, 93);
 
   let billToY = 101;
   if (data.customer.email) {
@@ -95,7 +95,7 @@ export function generateInvoicePDF(data: InvoicePDFData): jsPDF {
       item.description,
       item.quantity.toString(),
       formatCurrency(item.unitPrice),
-      formatCurrency(item.amount),
+      formatCurrency(item.total),
     ]),
     headStyles: {
       fillColor: [26, 86, 219],
