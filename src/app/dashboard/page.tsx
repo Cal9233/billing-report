@@ -114,11 +114,26 @@ export default function DashboardPage() {
     );
   }
 
+  // Provide safe fallback values for nested properties
+  const invoiceSummary = data.invoiceSummary ?? {
+    total: 0,
+    totalAmount: 0,
+    byStatus: {},
+    paidAmount: 0,
+    outstandingAmount: 0,
+  };
+
+  const poSummary = data.poSummary ?? {
+    total: 0,
+    totalAmount: 0,
+    byStatus: {},
+  };
+
   const statCards = [
     {
       title: "Total Revenue",
-      value: formatCurrency(data.invoiceSummary.totalAmount),
-      subtitle: `${data.invoiceSummary.total} total invoices`,
+      value: formatCurrency(invoiceSummary.totalAmount ?? 0),
+      subtitle: `${invoiceSummary.total ?? 0} total invoices`,
       icon: DollarSign,
       accent: "#16a34a",
       accentBg: "#f0fdf4",
@@ -126,8 +141,8 @@ export default function DashboardPage() {
     },
     {
       title: "Collected",
-      value: formatCurrency(data.invoiceSummary.paidAmount),
-      subtitle: `${data.invoiceSummary.byStatus.paid || 0} paid invoices`,
+      value: formatCurrency(invoiceSummary.paidAmount ?? 0),
+      subtitle: `${invoiceSummary.byStatus?.paid ?? 0} paid invoices`,
       icon: TrendingUp,
       accent: "#2563eb",
       accentBg: "#eff6ff",
@@ -135,8 +150,8 @@ export default function DashboardPage() {
     },
     {
       title: "Outstanding",
-      value: formatCurrency(data.invoiceSummary.outstandingAmount),
-      subtitle: `${(data.invoiceSummary.byStatus.sent || 0) + (data.invoiceSummary.byStatus.overdue || 0)} pending`,
+      value: formatCurrency(invoiceSummary.outstandingAmount ?? 0),
+      subtitle: `${((invoiceSummary.byStatus?.sent ?? 0) + (invoiceSummary.byStatus?.overdue ?? 0))} pending`,
       icon: AlertTriangle,
       accent: "#d97706",
       accentBg: "#fffbeb",
@@ -144,8 +159,8 @@ export default function DashboardPage() {
     },
     {
       title: "Purchase Orders",
-      value: formatCurrency(data.poSummary.totalAmount),
-      subtitle: `${data.poSummary.total} total orders`,
+      value: formatCurrency(poSummary.totalAmount ?? 0),
+      subtitle: `${poSummary.total ?? 0} total orders`,
       icon: ShoppingCart,
       accent: "#7c3aed",
       accentBg: "#f5f3ff",
@@ -153,7 +168,7 @@ export default function DashboardPage() {
     },
     {
       title: "Customers",
-      value: data.customerCount.toString(),
+      value: (data.customerCount ?? 0).toString(),
       subtitle: "Active accounts",
       icon: Users,
       accent: "#0891b2",
@@ -162,8 +177,8 @@ export default function DashboardPage() {
     },
     {
       title: "Overdue",
-      value: (data.invoiceSummary.byStatus.overdue || 0).toString(),
-      subtitle: data.invoiceSummary.byStatus.overdue
+      value: (invoiceSummary.byStatus?.overdue ?? 0).toString(),
+      subtitle: (invoiceSummary.byStatus?.overdue ?? 0) > 0
         ? "Needs immediate attention"
         : "None — all clear",
       icon: FileText,
@@ -231,7 +246,7 @@ export default function DashboardPage() {
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={data.monthlyData}
+              data={data.monthlyData ?? []}
               barGap={4}
               barCategoryGap="30%"
             >
@@ -306,12 +321,12 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="divide-y divide-border">
-            {data.recentInvoices.length === 0 ? (
+            {(data.recentInvoices?.length ?? 0) === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
                 No invoices yet
               </p>
             ) : (
-              data.recentInvoices.map((inv) => (
+              (data.recentInvoices ?? []).map((inv) => (
                 <Link
                   key={inv.id}
                   href={`/invoices/${inv.id}`}
@@ -351,12 +366,12 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="divide-y divide-border">
-            {data.recentPOs.length === 0 ? (
+            {(data.recentPOs?.length ?? 0) === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
                 No purchase orders yet
               </p>
             ) : (
-              data.recentPOs.map((po) => (
+              (data.recentPOs ?? []).map((po) => (
                 <Link
                   key={po.id}
                   href={`/purchase-orders/${po.id}`}
@@ -384,7 +399,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Top Customers */}
-      {data.customerRevenue.length > 0 && (
+      {(data.customerRevenue?.length ?? 0) > 0 && (
         <div className="bg-white rounded-xl border border-border">
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
             <h2 className="text-base font-semibold text-foreground">
@@ -398,7 +413,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="divide-y divide-border">
-            {data.customerRevenue.map((customer, i) => (
+            {(data.customerRevenue ?? []).map((customer, i) => (
               <div
                 key={customer.id}
                 className="flex items-center gap-4 px-6 py-3.5"
