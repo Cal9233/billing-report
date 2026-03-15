@@ -58,6 +58,7 @@ model Invoice {
   customerId    String
   customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lineItems     LineItem[]
+  payments      Payment[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -112,4 +113,20 @@ model POLineItem {
   purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
 
   @@index([purchaseOrderId])
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount    Float
+  paymentDate DateTime
+  method    String   // cash, check, credit_card, bank_transfer, other
+  notes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([invoiceId])
+  @@index([paymentDate])
 }

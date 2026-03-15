@@ -59,6 +59,15 @@ export type CustomerCreateInput = z.infer<typeof customerCreateSchema>;
 export const customerUpdateSchema = customerCreateSchema.partial();
 export type CustomerUpdateInput = z.infer<typeof customerUpdateSchema>;
 
+export const paymentCreateSchema = z.object({
+  amount: z.number().positive("Amount must be positive").max(1_000_000_000, "Amount too large"),
+  paymentDate: z.string().min(1, "Payment date is required").max(50, "Payment date too long"),
+  method: z.enum(["cash", "check", "credit_card", "bank_transfer", "other"]),
+  notes: z.string().max(500, "Notes too long").optional(),
+});
+
+export type PaymentCreateInput = z.infer<typeof paymentCreateSchema>;
+
 export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 export type POStatus = "draft" | "submitted" | "approved" | "received" | "cancelled";
 
