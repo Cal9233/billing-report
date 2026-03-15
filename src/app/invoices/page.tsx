@@ -26,7 +26,7 @@ export default function InvoicesPage() {
     const url = filter ? `/api/invoices?status=${filter}` : "/api/invoices";
     fetch(url)
       .then((res) => res.json())
-      .then(setInvoices)
+      .then((res) => setInvoices(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [filter]);
@@ -61,7 +61,7 @@ export default function InvoicesPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2">
+      <div role="group" aria-label="Filter invoices by status" className="flex flex-wrap gap-2">
         {statuses.map((s) => (
           <button
             key={s}
@@ -69,7 +69,9 @@ export default function InvoicesPage() {
               setFilter(s);
               setLoading(true);
             }}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            aria-pressed={filter === s}
+            aria-label={`Filter by ${s || "all"} status`}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
               filter === s
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-accent"
@@ -80,8 +82,12 @@ export default function InvoicesPage() {
         ))}
       </div>
 
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {loading ? "Loading invoices..." : `${invoices.length} invoice${invoices.length !== 1 ? "s" : ""} shown`}
+      </div>
+
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-12 text-muted-foreground" aria-hidden="true">
           Loading invoices...
         </div>
       ) : invoices.length === 0 ? (
@@ -182,9 +188,10 @@ export default function InvoicesPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDelete(inv.id)}
+                            aria-label={`Delete invoice ${inv.invoiceNumber}`}
                             className="text-destructive hover:text-destructive"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         </div>
                       </td>

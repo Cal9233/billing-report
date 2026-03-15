@@ -50,7 +50,7 @@ export function POForm({ initialData, mode }: POFormProps) {
   useEffect(() => {
     fetch("/api/customers")
       .then((res) => res.json())
-      .then(setCustomers)
+      .then((res) => setCustomers(res.data))
       .catch(console.error);
   }, []);
 
@@ -129,7 +129,7 @@ export function POForm({ initialData, mode }: POFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-4 bg-destructive/10 text-destructive rounded-lg text-sm">{error}</div>
+        <div role="alert" className="p-4 bg-destructive/10 text-destructive rounded-lg text-sm">{error}</div>
       )}
 
       <Card>
@@ -137,11 +137,12 @@ export function POForm({ initialData, mode }: POFormProps) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Vendor</label>
+              <label htmlFor="po-vendor" className="block text-sm font-medium mb-1">Vendor</label>
               <select
+                id="po-vendor"
                 value={formData.customerId}
                 onChange={(e) => setFormData((prev) => ({ ...prev, customerId: e.target.value }))}
-                className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 required
               >
                 <option value="">Select a vendor...</option>
@@ -151,11 +152,12 @@ export function POForm({ initialData, mode }: POFormProps) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Status</label>
+              <label htmlFor="po-status" className="block text-sm font-medium mb-1">Status</label>
               <select
+                id="po-status"
                 value={formData.status}
                 onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
-                className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <option value="draft">Draft</option>
                 <option value="submitted">Submitted</option>
@@ -165,18 +167,18 @@ export function POForm({ initialData, mode }: POFormProps) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Issue Date</label>
-              <Input type="date" value={formData.issueDate}
+              <label htmlFor="po-issue-date" className="block text-sm font-medium mb-1">Issue Date</label>
+              <Input id="po-issue-date" type="date" value={formData.issueDate}
                 onChange={(e) => setFormData((prev) => ({ ...prev, issueDate: e.target.value }))} required />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Expected Delivery</label>
-              <Input type="date" value={formData.expectedDate}
+              <label htmlFor="po-expected-date" className="block text-sm font-medium mb-1">Expected Delivery</label>
+              <Input id="po-expected-date" type="date" value={formData.expectedDate}
                 onChange={(e) => setFormData((prev) => ({ ...prev, expectedDate: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Tax Rate (%)</label>
-              <Input type="number" step="0.01" min="0" max="100" value={formData.taxRate}
+              <label htmlFor="po-tax-rate" className="block text-sm font-medium mb-1">Tax Rate (%)</label>
+              <Input id="po-tax-rate" type="number" step="0.01" min="0" max="100" value={formData.taxRate}
                 onChange={(e) => setFormData((prev) => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))} />
             </div>
           </div>
@@ -186,13 +188,14 @@ export function POForm({ initialData, mode }: POFormProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Line Items</CardTitle>
-          <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
-            <Plus className="h-4 w-4" /> Add Item
+          <Button type="button" variant="outline" size="sm" onClick={addLineItem} aria-label="Add line item">
+            <Plus className="h-4 w-4" aria-hidden="true" /> Add Item
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground">
+          <div className="space-y-4">
+            {/* Column headers — hidden on mobile, shown on md+ */}
+            <div className="hidden md:grid md:grid-cols-12 gap-2 text-sm font-medium text-muted-foreground" aria-hidden="true">
               <div className="col-span-5">Description</div>
               <div className="col-span-2">Quantity</div>
               <div className="col-span-2">Unit Price</div>
@@ -200,27 +203,39 @@ export function POForm({ initialData, mode }: POFormProps) {
               <div className="col-span-1"></div>
             </div>
             {formData.lineItems.map((item, i) => (
-              <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                <div className="col-span-5">
-                  <Input placeholder="Item description" value={item.description}
+              <div key={i} className="flex flex-col gap-2 rounded-lg border border-border p-3 md:border-0 md:p-0 md:flex-none md:grid md:grid-cols-12 md:gap-2 md:items-center">
+                <div className="md:col-span-5">
+                  <label htmlFor={`po-line-desc-${i}`} className="block text-xs font-medium text-muted-foreground mb-1 md:sr-only">Description</label>
+                  <Input id={`po-line-desc-${i}`} placeholder="Item description" value={item.description}
                     onChange={(e) => updateLineItem(i, "description", e.target.value)} required />
                 </div>
-                <div className="col-span-2">
-                  <Input type="number" min="0.01" step="0.01" value={item.quantity}
-                    onChange={(e) => updateLineItem(i, "quantity", parseFloat(e.target.value) || 0)} required />
+                <div className="flex gap-2 md:contents">
+                  <div className="flex-1 md:col-span-2">
+                    <label htmlFor={`po-line-qty-${i}`} className="block text-xs font-medium text-muted-foreground mb-1 md:sr-only">Quantity</label>
+                    <Input id={`po-line-qty-${i}`} type="number" min="0.01" step="0.01" value={item.quantity}
+                      onChange={(e) => updateLineItem(i, "quantity", parseFloat(e.target.value) || 0)}
+                      aria-label={`Quantity for line item ${i + 1}`} required />
+                  </div>
+                  <div className="flex-1 md:col-span-2">
+                    <label htmlFor={`po-line-price-${i}`} className="block text-xs font-medium text-muted-foreground mb-1 md:sr-only">Unit Price</label>
+                    <Input id={`po-line-price-${i}`} type="number" min="0" step="0.01" value={item.unitPrice}
+                      onChange={(e) => updateLineItem(i, "unitPrice", parseFloat(e.target.value) || 0)}
+                      aria-label={`Unit price for line item ${i + 1}`} required />
+                  </div>
                 </div>
-                <div className="col-span-2">
-                  <Input type="number" min="0" step="0.01" value={item.unitPrice}
-                    onChange={(e) => updateLineItem(i, "unitPrice", parseFloat(e.target.value) || 0)} required />
-                </div>
-                <div className="col-span-2 text-right text-sm font-medium">
-                  ${(item.quantity * item.unitPrice).toFixed(2)}
-                </div>
-                <div className="col-span-1 text-right">
-                  <Button type="button" variant="ghost" size="icon" onClick={() => removeLineItem(i)}
-                    disabled={formData.lineItems.length <= 1} className="text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <div className="flex items-center justify-between md:contents">
+                  <div className="md:col-span-2 md:text-right text-sm font-medium">
+                    <span className="text-muted-foreground md:hidden">Amount: </span>
+                    ${(item.quantity * item.unitPrice).toFixed(2)}
+                  </div>
+                  <div className="md:col-span-1 md:text-right">
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeLineItem(i)}
+                      disabled={formData.lineItems.length <= 1}
+                      aria-label={`Remove line item ${i + 1}`}
+                      className="text-destructive min-w-[44px] min-h-[44px]">
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -250,17 +265,17 @@ export function POForm({ initialData, mode }: POFormProps) {
         <CardHeader><CardTitle>Additional Information</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Notes</label>
-            <textarea value={formData.notes}
+            <label htmlFor="po-notes" className="block text-sm font-medium mb-1">Notes</label>
+            <textarea id="po-notes" value={formData.notes}
               onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-              rows={3} className="flex w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              rows={3} className="flex w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               placeholder="Additional notes..." />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Terms & Conditions</label>
-            <textarea value={formData.terms}
+            <label htmlFor="po-terms" className="block text-sm font-medium mb-1">Terms & Conditions</label>
+            <textarea id="po-terms" value={formData.terms}
               onChange={(e) => setFormData((prev) => ({ ...prev, terms: e.target.value }))}
-              rows={3} className="flex w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              rows={3} className="flex w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               placeholder="Payment terms..." />
           </div>
         </CardContent>

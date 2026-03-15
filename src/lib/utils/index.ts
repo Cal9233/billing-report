@@ -25,9 +25,9 @@ export function generateInvoiceNumber(): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
-  const random = Math.floor(Math.random() * 10000)
+  const random = Math.floor(Math.random() * 1000000)
     .toString()
-    .padStart(4, "0");
+    .padStart(6, "0");
   return `INV-${year}${month}-${random}`;
 }
 
@@ -35,9 +35,9 @@ export function generatePONumber(): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
-  const random = Math.floor(Math.random() * 10000)
+  const random = Math.floor(Math.random() * 1000000)
     .toString()
-    .padStart(4, "0");
+    .padStart(6, "0");
   return `PO-${year}${month}-${random}`;
 }
 
@@ -61,16 +61,5 @@ export function calculateTotals(
   return { subtotal, taxAmount, total };
 }
 
-export function getStatusColor(status: string): string {
-  const colors: Record<string, string> = {
-    draft: "bg-gray-100 text-gray-800",
-    sent: "bg-blue-100 text-blue-800",
-    paid: "bg-green-100 text-green-800",
-    overdue: "bg-red-100 text-red-800",
-    cancelled: "bg-gray-100 text-gray-500",
-    submitted: "bg-blue-100 text-blue-800",
-    approved: "bg-green-100 text-green-800",
-    received: "bg-emerald-100 text-emerald-800",
-  };
-  return colors[status] || "bg-gray-100 text-gray-800";
-}
+// Re-export status utilities from constants for backward compatibility
+export { getStatusColor, getStatusLabel, STATUS_COLORS, STATUS_LABELS, INVOICE_STATUSES, PO_STATUSES } from "@/lib/constants/status";

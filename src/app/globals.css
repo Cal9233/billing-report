@@ -48,10 +48,65 @@
   .no-print {
     display: none !important;
   }
+
   body {
     background: white !important;
     color: black !important;
+    font-size: 16px !important;
+    line-height: 1.5 !important;
   }
+
+  h1 {
+    font-size: 24px !important;
+  }
+
+  h2 {
+    font-size: 20px !important;
+  }
+
+  h3 {
+    font-size: 18px !important;
+  }
+
+  p,
+  td,
+  th,
+  li,
+  span,
+  div {
+    font-size: 16px !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th,
+  td {
+    border: 1px solid #888 !important;
+    padding: 8px 12px !important;
+  }
+
+  thead {
+    background-color: #f0f0f0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Ensure cards/sections break cleanly */
+  .card,
+  [class*="card"] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Remove shadows and unnecessary decorations */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
   .print-only {
     display: block !important;
   }

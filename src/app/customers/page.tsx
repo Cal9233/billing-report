@@ -36,7 +36,7 @@ export default function CustomersPage() {
   const loadCustomers = () => {
     fetch("/api/customers")
       .then((res) => res.json())
-      .then(setCustomers)
+      .then((res) => setCustomers(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
   };

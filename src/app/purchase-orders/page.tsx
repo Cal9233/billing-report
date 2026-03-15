@@ -28,7 +28,7 @@ export default function PurchaseOrdersPage() {
       : "/api/purchase-orders";
     fetch(url)
       .then((res) => res.json())
-      .then(setOrders)
+      .then((res) => setOrders(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [filter]);
@@ -60,12 +60,14 @@ export default function PurchaseOrdersPage() {
         </Link>
       </div>
 
-      <div className="flex gap-2">
+      <div role="group" aria-label="Filter purchase orders by status" className="flex flex-wrap gap-2">
         {statuses.map((s) => (
           <button
             key={s}
             onClick={() => { setFilter(s); setLoading(true); }}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            aria-pressed={filter === s}
+            aria-label={`Filter by ${s || "all"} status`}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
               filter === s
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-accent"
@@ -76,8 +78,12 @@ export default function PurchaseOrdersPage() {
         ))}
       </div>
 
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {loading ? "Loading purchase orders..." : `${orders.length} purchase order${orders.length !== 1 ? "s" : ""} shown`}
+      </div>
+
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Loading...</div>
+        <div className="text-center py-12 text-muted-foreground" aria-hidden="true">Loading...</div>
       ) : orders.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -142,8 +148,8 @@ export default function PurchaseOrdersPage() {
                           <Link href={`/purchase-orders/${po.id}/edit`}>
                             <Button variant="ghost" size="sm">Edit</Button>
                           </Link>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(po.id)} className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(po.id)} aria-label={`Delete purchase order ${po.poNumber}`} className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         </div>
                       </td>

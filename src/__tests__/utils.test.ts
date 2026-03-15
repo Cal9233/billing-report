@@ -46,12 +46,12 @@ describe("formatDate", () => {
 describe("generateInvoiceNumber", () => {
   it("generates INV- prefixed numbers", () => {
     const num = generateInvoiceNumber();
-    expect(num).toMatch(/^INV-\d{6}-\d{4}$/);
+    expect(num).toMatch(/^INV-\d{6}-\d{6}$/);
   });
 
   it("generates unique numbers", () => {
     const nums = new Set(Array.from({ length: 100 }, () => generateInvoiceNumber()));
-    // With 10000 possible values, 100 samples should be mostly unique
+    // With 1000000 possible values, 100 samples should be unique
     expect(nums.size).toBeGreaterThan(90);
   });
 });
@@ -59,7 +59,7 @@ describe("generateInvoiceNumber", () => {
 describe("generatePONumber", () => {
   it("generates PO- prefixed numbers", () => {
     const num = generatePONumber();
-    expect(num).toMatch(/^PO-\d{6}-\d{4}$/);
+    expect(num).toMatch(/^PO-\d{6}-\d{6}$/);
   });
 });
 

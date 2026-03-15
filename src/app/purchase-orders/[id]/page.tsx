@@ -54,8 +54,13 @@ export default function PODetailPage() {
 
   const handleDelete = async () => {
     if (!confirm("Delete this purchase order?")) return;
-    await fetch(`/api/purchase-orders/${params.id}`, { method: "DELETE" });
-    router.push("/purchase-orders");
+    try {
+      await fetch(`/api/purchase-orders/${params.id}`, { method: "DELETE" });
+      router.push("/purchase-orders");
+    } catch (error) {
+      console.error("Failed to delete purchase order:", error);
+      alert("Failed to delete purchase order. Please try again.");
+    }
   };
 
   const handleDownloadPDF = () => {

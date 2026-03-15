@@ -37,10 +37,14 @@ model Invoice {
   notes         String?
   terms         String?
   customerId    String
-  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lineItems     LineItem[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@index([status])
+  @@index([customerId])
+  @@index([createdAt])
 }
 
 model PurchaseOrder {
@@ -56,10 +60,14 @@ model PurchaseOrder {
   notes         String?
   terms         String?
   customerId    String
-  customer      Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer      Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lineItems     POLineItem[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  @@index([status])
+  @@index([customerId])
+  @@index([createdAt])
 }
 
 model LineItem {

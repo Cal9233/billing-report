@@ -1,31 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/db/client";
-import { invoiceCreateSchema } from "@/types";
-import {
-  generateInvoiceNumber,
-  calculateLineItemAmount,
-  calculateTotals,
-} from "@/lib/utils";
+import { invoiceCreateSchema, ZodError } from "@/types";
+import { listInvoices, createInvoice } from "@/lib/services/invoice.service";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get("status");
-    const customerId = searchParams.get("customerId");
+    const status = searchParams.get("status") || undefined;
+    const customerId = searchParams.get("customerId") || undefined;
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "20", 10);
 
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
-    if (customerId) where.customerId = customerId;
-
-    const invoices = await prisma.invoice.findMany({
-      where,
-      include: {
-        customer: { select: { id: true, name: true, email: true } },
-        lineItems: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
-    return NextResponse.json(invoices);
+    const result = await listInvoices({ status, customerId }, page, limit);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Failed to fetch invoices:", error);
     return NextResponse.json(
@@ -40,45 +26,37 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validated = invoiceCreateSchema.parse(body);
 
-    const { subtotal, taxAmount, total } = calculateTotals(
-      validated.lineItems,
-      validated.taxRate
-    );
-
-    const invoice = await prisma.invoice.create({
-      data: {
-        invoiceNumber: generateInvoiceNumber(),
-        status: validated.status,
-        issueDate: new Date(validated.issueDate),
-        dueDate: new Date(validated.dueDate),
-        subtotal,
-        taxRate: validated.taxRate,
-        taxAmount,
-        total,
-        notes: validated.notes || null,
-        terms: validated.terms || null,
-        customerId: validated.customerId,
-        lineItems: {
-          create: validated.lineItems.map((item) => ({
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            amount: calculateLineItemAmount(item.quantity, item.unitPrice),
-          })),
-        },
-      },
-      include: {
-        customer: true,
-        lineItems: true,
-      },
-    });
-
+    const invoice = await createInvoice(validated);
     return NextResponse.json(invoice, { status: 201 });
   } catch (error) {
-    if (error instanceof Error && error.name === "ZodError") {
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: error },
         { status: 400 }
+      );
+    }
+    if (error instanceof Error && error.message.includes("Customer not found")) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+    if (error instanceof Error && (error.message.includes("Invalid issueDate") || error.message.includes("Invalid dueDate"))) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+    if (error instanceof Error && error.message.includes("Failed to generate unique invoice number")) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
       );
     }
     console.error("Failed to create invoice:", error);
