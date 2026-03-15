@@ -12,6 +12,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { SearchBox } from "@/components/search/search-box";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -26,11 +27,14 @@ export function Sidebar() {
 
   return (
     <aside className="no-print w-64 border-r border-border bg-card flex flex-col" aria-label="Application sidebar">
-      <div className="p-6 border-b border-border">
-        <h1 className="text-xl font-bold text-primary">BillFlow</h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Billing & Invoice Management
-        </p>
+      <div className="p-6 border-b border-border space-y-4">
+        <div>
+          <h1 className="text-xl font-bold text-primary">BillFlow</h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Billing & Invoice Management
+          </p>
+        </div>
+        <SearchBox />
       </div>
       <nav role="navigation" aria-label="Main navigation" className="flex-1 p-4 space-y-1">
         {navigation.map((item) => {
