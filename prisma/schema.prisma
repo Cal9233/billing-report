@@ -12,6 +12,9 @@ model User {
   email    String  @unique
   password String  // bcrypt hashed
   name     String?
+  role     String  @default("user") // user, admin
+
+  sessions Session[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -20,17 +23,21 @@ model User {
 model Session {
   id        String   @id @default(cuid())
   userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
+  id          String   @id @default(cuid())
+  name        String   // company name
+  contactName String?  // primary contact person
+  email       String?
+  phone       String?
   address   String?
   city      String?
   state     String?

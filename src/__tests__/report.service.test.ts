@@ -18,6 +18,75 @@ vi.mock("@/lib/db/client", () => ({
   },
 }));
 
+// Shared dates for deterministic tests
+const NOW = new Date();
+const CREATED_AT = new Date("2024-01-01T00:00:00.000Z");
+const UPDATED_AT = new Date("2024-01-02T00:00:00.000Z");
+const DUE_DATE = new Date("2024-02-01T00:00:00.000Z");
+
+/** Build a minimal Invoice mock with all required schema fields. */
+function makeInvoice(overrides: {
+  id: string;
+  invoiceNumber: string;
+  status: string;
+  issueDate: Date;
+  total: number;
+  customerId: string;
+  customer: { id: string; name: string };
+}) {
+  return {
+    ...overrides,
+    dueDate: DUE_DATE,
+    subtotal: overrides.total,
+    taxRate: 0,
+    taxAmount: 0,
+    notes: null,
+    terms: null,
+    createdAt: CREATED_AT,
+    updatedAt: UPDATED_AT,
+  };
+}
+
+/** Build a minimal PurchaseOrder mock with all required schema fields. */
+function makePO(overrides: {
+  id: string;
+  poNumber: string;
+  status: string;
+  issueDate: Date;
+  total: number;
+  customerId: string;
+  customer: { id: string; name: string };
+}) {
+  return {
+    ...overrides,
+    expectedDate: null,
+    subtotal: overrides.total,
+    taxRate: 0,
+    taxAmount: 0,
+    notes: null,
+    terms: null,
+    createdAt: CREATED_AT,
+    updatedAt: UPDATED_AT,
+  };
+}
+
+/** Build a minimal Customer mock with all required schema fields. */
+function makeCustomer(overrides: { id: string; name: string }) {
+  return {
+    ...overrides,
+    contactName: null,
+    email: null,
+    phone: null,
+    address: null,
+    city: null,
+    state: null,
+    zip: null,
+    country: "US",
+    createdAt: CREATED_AT,
+    updatedAt: UPDATED_AT,
+  };
+}
+
 describe("Report Service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -44,7 +113,7 @@ describe("Report Service", () => {
 
     it("calculates invoice summary correctly", async () => {
       const mockInvoices = [
-        {
+        makeInvoice({
           id: "inv1",
           invoiceNumber: "INV-001",
           status: "paid",
@@ -52,8 +121,8 @@ describe("Report Service", () => {
           total: 1000,
           customerId: "cust1",
           customer: { id: "cust1", name: "Customer A" },
-        },
-        {
+        }),
+        makeInvoice({
           id: "inv2",
           invoiceNumber: "INV-002",
           status: "sent",
@@ -61,8 +130,8 @@ describe("Report Service", () => {
           total: 500,
           customerId: "cust1",
           customer: { id: "cust1", name: "Customer A" },
-        },
-        {
+        }),
+        makeInvoice({
           id: "inv3",
           invoiceNumber: "INV-003",
           status: "overdue",
@@ -70,7 +139,7 @@ describe("Report Service", () => {
           total: 750,
           customerId: "cust2",
           customer: { id: "cust2", name: "Customer B" },
-        },
+        }),
       ];
 
       vi.mocked(prisma.invoice.findMany).mockResolvedValue(mockInvoices);
@@ -91,7 +160,7 @@ describe("Report Service", () => {
 
     it("calculates PO summary correctly", async () => {
       const mockPOs = [
-        {
+        makePO({
           id: "po1",
           poNumber: "PO-001",
           status: "approved",
@@ -99,8 +168,8 @@ describe("Report Service", () => {
           total: 5000,
           customerId: "vendor1",
           customer: { id: "vendor1", name: "Vendor A" },
-        },
-        {
+        }),
+        makePO({
           id: "po2",
           poNumber: "PO-002",
           status: "received",
@@ -108,7 +177,7 @@ describe("Report Service", () => {
           total: 3000,
           customerId: "vendor1",
           customer: { id: "vendor1", name: "Vendor A" },
-        },
+        }),
       ];
 
       vi.mocked(prisma.invoice.findMany).mockResolvedValue([]);
@@ -126,7 +195,7 @@ describe("Report Service", () => {
 
     it("groups customers correctly by revenue", async () => {
       const mockInvoices = [
-        {
+        makeInvoice({
           id: "inv1",
           invoiceNumber: "INV-001",
           status: "paid",
@@ -134,8 +203,8 @@ describe("Report Service", () => {
           total: 1000,
           customerId: "cust1",
           customer: { id: "cust1", name: "Customer A" },
-        },
-        {
+        }),
+        makeInvoice({
           id: "inv2",
           invoiceNumber: "INV-002",
           status: "paid",
@@ -143,8 +212,8 @@ describe("Report Service", () => {
           total: 500,
           customerId: "cust1",
           customer: { id: "cust1", name: "Customer A" },
-        },
-        {
+        }),
+        makeInvoice({
           id: "inv3",
           invoiceNumber: "INV-003",
           status: "paid",
@@ -152,12 +221,12 @@ describe("Report Service", () => {
           total: 2000,
           customerId: "cust2",
           customer: { id: "cust2", name: "Customer B" },
-        },
+        }),
       ];
 
       const mockCustomers = [
-        { id: "cust1", name: "Customer A" },
-        { id: "cust2", name: "Customer B" },
+        makeCustomer({ id: "cust1", name: "Customer A" }),
+        makeCustomer({ id: "cust2", name: "Customer B" }),
       ];
 
       vi.mocked(prisma.invoice.findMany).mockResolvedValue(mockInvoices);
@@ -177,20 +246,21 @@ describe("Report Service", () => {
     });
 
     it("limits customer revenue to top 10", async () => {
-      const mockInvoices = Array.from({ length: 15 }, (_, i) => ({
-        id: `inv${i}`,
-        invoiceNumber: `INV-${String(i + 1).padStart(3, "0")}`,
-        status: "paid" as const,
-        issueDate: new Date("2024-01-15"),
-        total: 100 * (i + 1),
-        customerId: `cust${i}`,
-        customer: { id: `cust${i}`, name: `Customer ${i}` },
-      }));
+      const mockInvoices = Array.from({ length: 15 }, (_, i) =>
+        makeInvoice({
+          id: `inv${i}`,
+          invoiceNumber: `INV-${String(i + 1).padStart(3, "0")}`,
+          status: "paid",
+          issueDate: new Date("2024-01-15"),
+          total: 100 * (i + 1),
+          customerId: `cust${i}`,
+          customer: { id: `cust${i}`, name: `Customer ${i}` },
+        })
+      );
 
-      const mockCustomers = Array.from({ length: 15 }, (_, i) => ({
-        id: `cust${i}`,
-        name: `Customer ${i}`,
-      }));
+      const mockCustomers = Array.from({ length: 15 }, (_, i) =>
+        makeCustomer({ id: `cust${i}`, name: `Customer ${i}` })
+      );
 
       vi.mocked(prisma.invoice.findMany).mockResolvedValue(mockInvoices);
       vi.mocked(prisma.purchaseOrder.findMany).mockResolvedValue([]);
@@ -226,7 +296,7 @@ describe("Report Service", () => {
       const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
       const mockInvoices = [
-        {
+        makeInvoice({
           id: "inv1",
           invoiceNumber: "INV-001",
           status: "paid",
@@ -234,11 +304,11 @@ describe("Report Service", () => {
           total: 1000,
           customerId: "cust1",
           customer: { id: "cust1", name: "Customer A" },
-        },
+        }),
       ];
 
       const mockPOs = [
-        {
+        makePO({
           id: "po1",
           poNumber: "PO-001",
           status: "approved",
@@ -246,7 +316,7 @@ describe("Report Service", () => {
           total: 5000,
           customerId: "vendor1",
           customer: { id: "vendor1", name: "Vendor A" },
-        },
+        }),
       ];
 
       vi.mocked(prisma.invoice.findMany).mockResolvedValue(mockInvoices);
@@ -263,15 +333,17 @@ describe("Report Service", () => {
     });
 
     it("returns recent invoices (max 5)", async () => {
-      const mockInvoices = Array.from({ length: 10 }, (_, i) => ({
-        id: `inv${i}`,
-        invoiceNumber: `INV-${String(i + 1).padStart(3, "0")}`,
-        status: "sent",
-        issueDate: new Date(`2024-0${Math.floor(i / 3) + 1}-15`),
-        total: 100 * (i + 1),
-        customerId: "cust1",
-        customer: { id: "cust1", name: "Customer A" },
-      }));
+      const mockInvoices = Array.from({ length: 10 }, (_, i) =>
+        makeInvoice({
+          id: `inv${i}`,
+          invoiceNumber: `INV-${String(i + 1).padStart(3, "0")}`,
+          status: "sent",
+          issueDate: new Date(`2024-0${Math.floor(i / 3) + 1}-15`),
+          total: 100 * (i + 1),
+          customerId: "cust1",
+          customer: { id: "cust1", name: "Customer A" },
+        })
+      );
 
       vi.mocked(prisma.invoice.findMany).mockResolvedValue(mockInvoices);
       vi.mocked(prisma.purchaseOrder.findMany).mockResolvedValue([]);
@@ -286,15 +358,17 @@ describe("Report Service", () => {
     });
 
     it("returns recent purchase orders (max 5)", async () => {
-      const mockPOs = Array.from({ length: 8 }, (_, i) => ({
-        id: `po${i}`,
-        poNumber: `PO-${String(i + 1).padStart(3, "0")}`,
-        status: "submitted",
-        issueDate: new Date(`2024-0${Math.floor(i / 3) + 1}-10`),
-        total: 500 * (i + 1),
-        customerId: "vendor1",
-        customer: { id: "vendor1", name: "Vendor A" },
-      }));
+      const mockPOs = Array.from({ length: 8 }, (_, i) =>
+        makePO({
+          id: `po${i}`,
+          poNumber: `PO-${String(i + 1).padStart(3, "0")}`,
+          status: "submitted",
+          issueDate: new Date(`2024-0${Math.floor(i / 3) + 1}-10`),
+          total: 500 * (i + 1),
+          customerId: "vendor1",
+          customer: { id: "vendor1", name: "Vendor A" },
+        })
+      );
 
       vi.mocked(prisma.invoice.findMany).mockResolvedValue([]);
       vi.mocked(prisma.purchaseOrder.findMany).mockResolvedValue(mockPOs);
@@ -310,7 +384,7 @@ describe("Report Service", () => {
 
     it("includes all status types in summaries", async () => {
       const mockInvoices = [
-        {
+        makeInvoice({
           id: "inv1",
           invoiceNumber: "INV-001",
           status: "draft",
@@ -318,8 +392,8 @@ describe("Report Service", () => {
           total: 100,
           customerId: "cust1",
           customer: { id: "cust1", name: "Customer A" },
-        },
-        {
+        }),
+        makeInvoice({
           id: "inv2",
           invoiceNumber: "INV-002",
           status: "sent",
@@ -327,8 +401,8 @@ describe("Report Service", () => {
           total: 200,
           customerId: "cust1",
           customer: { id: "cust1", name: "Customer A" },
-        },
-        {
+        }),
+        makeInvoice({
           id: "inv3",
           invoiceNumber: "INV-003",
           status: "paid",
@@ -336,8 +410,8 @@ describe("Report Service", () => {
           total: 300,
           customerId: "cust1",
           customer: { id: "cust1", name: "Customer A" },
-        },
-        {
+        }),
+        makeInvoice({
           id: "inv4",
           invoiceNumber: "INV-004",
           status: "overdue",
@@ -345,8 +419,8 @@ describe("Report Service", () => {
           total: 400,
           customerId: "cust1",
           customer: { id: "cust1", name: "Customer A" },
-        },
-        {
+        }),
+        makeInvoice({
           id: "inv5",
           invoiceNumber: "INV-005",
           status: "cancelled",
@@ -354,11 +428,11 @@ describe("Report Service", () => {
           total: 500,
           customerId: "cust1",
           customer: { id: "cust1", name: "Customer A" },
-        },
+        }),
       ];
 
       const mockPOs = [
-        {
+        makePO({
           id: "po1",
           poNumber: "PO-001",
           status: "draft",
@@ -366,8 +440,8 @@ describe("Report Service", () => {
           total: 1000,
           customerId: "vendor1",
           customer: { id: "vendor1", name: "Vendor A" },
-        },
-        {
+        }),
+        makePO({
           id: "po2",
           poNumber: "PO-002",
           status: "submitted",
@@ -375,8 +449,8 @@ describe("Report Service", () => {
           total: 2000,
           customerId: "vendor1",
           customer: { id: "vendor1", name: "Vendor A" },
-        },
-        {
+        }),
+        makePO({
           id: "po3",
           poNumber: "PO-003",
           status: "approved",
@@ -384,8 +458,8 @@ describe("Report Service", () => {
           total: 3000,
           customerId: "vendor1",
           customer: { id: "vendor1", name: "Vendor A" },
-        },
-        {
+        }),
+        makePO({
           id: "po4",
           poNumber: "PO-004",
           status: "received",
@@ -393,8 +467,8 @@ describe("Report Service", () => {
           total: 4000,
           customerId: "vendor1",
           customer: { id: "vendor1", name: "Vendor A" },
-        },
-        {
+        }),
+        makePO({
           id: "po5",
           poNumber: "PO-005",
           status: "cancelled",
@@ -402,7 +476,7 @@ describe("Report Service", () => {
           total: 5000,
           customerId: "vendor1",
           customer: { id: "vendor1", name: "Vendor A" },
-        },
+        }),
       ];
 
       vi.mocked(prisma.invoice.findMany).mockResolvedValue(mockInvoices);

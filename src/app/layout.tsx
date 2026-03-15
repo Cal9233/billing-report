@@ -4,8 +4,8 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { SessionProvider } from "@/components/auth/session-provider";
 
 export const metadata: Metadata = {
-  title: "Billing Report Software",
-  description: "Invoice and Purchase Order management with reporting",
+  title: "BillFlow — Dual Aero Billing",
+  description: "Invoice and Purchase Order management for Dual Aero",
 };
 
 export default function RootLayout({
@@ -14,7 +14,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ colorScheme: "light" }}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body>
         <SessionProvider>
           <a
@@ -23,15 +31,15 @@ export default function RootLayout({
           >
             Skip to main content
           </a>
-          <div className="flex h-screen">
+          <div className="flex h-screen overflow-hidden bg-background">
             <Sidebar />
             <main
               id="main-content"
               role="main"
-              className="flex-1 overflow-auto bg-muted/30"
+              className="flex-1 overflow-auto"
               tabIndex={-1}
             >
-              <div className="p-6 max-w-7xl mx-auto">{children}</div>
+              <div className="p-8 max-w-7xl mx-auto">{children}</div>
             </main>
           </div>
         </SessionProvider>

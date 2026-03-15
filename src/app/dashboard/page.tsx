@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import {
   FileText,
@@ -10,6 +9,7 @@ import {
   AlertTriangle,
   TrendingUp,
   Users,
+  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -22,6 +22,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { StatusBadge } from "@/components/shared/status-badge";
 
 interface ReportData {
   invoiceSummary: {
@@ -72,7 +73,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/reports", { next: { revalidate: 60 } })
+    fetch("/api/reports")
       .then((res) => res.json())
       .then(setData)
       .catch(console.error)
@@ -81,16 +82,34 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">Loading dashboard...</div>
+      <div className="space-y-8">
+        <div>
+          <div className="h-8 w-48 bg-gray-100 rounded-lg animate-pulse mb-2" />
+          <div className="h-5 w-72 bg-gray-100 rounded-lg animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="bg-white rounded-xl border border-border p-6 animate-pulse"
+            >
+              <div className="h-4 w-24 bg-gray-100 rounded mb-4" />
+              <div className="h-8 w-32 bg-gray-100 rounded mb-2" />
+              <div className="h-3 w-20 bg-gray-100 rounded" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-destructive">Failed to load dashboard data</div>
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+        <p className="text-muted-foreground">
+          Failed to load dashboard data. Please refresh.
+        </p>
       </div>
     );
   }
@@ -99,262 +118,310 @@ export default function DashboardPage() {
     {
       title: "Total Revenue",
       value: formatCurrency(data.invoiceSummary.totalAmount),
-      subtitle: `${data.invoiceSummary.total} invoices`,
+      subtitle: `${data.invoiceSummary.total} total invoices`,
       icon: DollarSign,
-      color: "text-green-600",
+      accent: "#16a34a",
+      accentBg: "#f0fdf4",
+      href: "/invoices",
     },
     {
       title: "Collected",
       value: formatCurrency(data.invoiceSummary.paidAmount),
-      subtitle: `${data.invoiceSummary.byStatus.paid || 0} paid`,
+      subtitle: `${data.invoiceSummary.byStatus.paid || 0} paid invoices`,
       icon: TrendingUp,
-      color: "text-blue-600",
+      accent: "#2563eb",
+      accentBg: "#eff6ff",
+      href: "/invoices?status=paid",
     },
     {
       title: "Outstanding",
       value: formatCurrency(data.invoiceSummary.outstandingAmount),
       subtitle: `${(data.invoiceSummary.byStatus.sent || 0) + (data.invoiceSummary.byStatus.overdue || 0)} pending`,
       icon: AlertTriangle,
-      color: "text-amber-600",
+      accent: "#d97706",
+      accentBg: "#fffbeb",
+      href: "/invoices?status=sent",
     },
     {
       title: "Purchase Orders",
       value: formatCurrency(data.poSummary.totalAmount),
-      subtitle: `${data.poSummary.total} orders`,
+      subtitle: `${data.poSummary.total} total orders`,
       icon: ShoppingCart,
-      color: "text-purple-600",
+      accent: "#7c3aed",
+      accentBg: "#f5f3ff",
+      href: "/purchase-orders",
     },
     {
       title: "Customers",
       value: data.customerCount.toString(),
       subtitle: "Active accounts",
       icon: Users,
-      color: "text-indigo-600",
+      accent: "#0891b2",
+      accentBg: "#ecfeff",
+      href: "/customers",
     },
     {
       title: "Overdue",
       value: (data.invoiceSummary.byStatus.overdue || 0).toString(),
-      subtitle: "Needs attention",
+      subtitle: data.invoiceSummary.byStatus.overdue
+        ? "Needs immediate attention"
+        : "None — all clear",
       icon: FileText,
-      color: "text-red-600",
+      accent: "#dc2626",
+      accentBg: "#fef2f2",
+      href: "/invoices?status=overdue",
     },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Page header */}
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Overview of your billing and purchase activity
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-base text-muted-foreground mt-1">
+          Your billing overview at a glance
         </p>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {statCards.map((card) => (
-          <Card key={card.title}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{card.title}</p>
-                  <p className="text-2xl font-bold mt-1">{card.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {card.subtitle}
-                  </p>
-                </div>
-                <card.icon className={`h-10 w-10 ${card.color} opacity-80`} />
+          <Link
+            key={card.title}
+            href={card.href}
+            className="group block bg-white rounded-xl border border-border p-6 hover:border-blue-200 hover:shadow-md transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {card.title}
+                </p>
+                <p className="text-2xl font-bold text-foreground mt-1.5">
+                  {card.value}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {card.subtitle}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: card.accentBg }}
+              >
+                <card.icon
+                  className="h-5 w-5"
+                  style={{ color: card.accent }}
+                  aria-hidden="true"
+                />
+              </div>
+            </div>
+          </Link>
         ))}
       </div>
 
       {/* Monthly Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Overview (Last 12 Months)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
-                <XAxis dataKey="month" fontSize={12} />
-                <YAxis
-                  fontSize={12}
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-                />
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                />
-                <Legend />
-                <Bar
-                  dataKey="invoiced"
-                  name="Invoiced"
-                  fill="#3b82f6"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="collected"
-                  name="Collected"
-                  fill="#22c55e"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="purchased"
-                  name="Purchased"
-                  fill="#a855f7"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-xl border border-border p-6">
+        <div className="mb-6">
+          <h2 className="text-base font-semibold text-foreground">
+            Monthly Overview
+          </h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Last 12 months of activity
+          </p>
+        </div>
+        <div className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={data.monthlyData}
+              barGap={4}
+              barCategoryGap="30%"
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#f3f4f6"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="month"
+                fontSize={12}
+                tick={{ fill: "#9ca3af" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                fontSize={12}
+                tick={{ fill: "#9ca3af" }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+              />
+              <Tooltip
+                formatter={(value: number, name: string) => [
+                  formatCurrency(value),
+                  name,
+                ]}
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.07)",
+                  fontSize: "13px",
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: "13px", paddingTop: "16px" }} />
+              <Bar
+                dataKey="invoiced"
+                name="Invoiced"
+                fill="#3b82f6"
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey="collected"
+                name="Collected"
+                fill="#22c55e"
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey="purchased"
+                name="Purchased"
+                fill="#a855f7"
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Invoices */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Recent Invoices</CardTitle>
+        <div className="bg-white rounded-xl border border-border">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 className="text-base font-semibold text-foreground">
+              Recent Invoices
+            </h2>
             <Link
               href="/invoices"
-              className="text-sm text-primary hover:underline"
+              className="flex items-center gap-1 text-sm text-primary hover:text-blue-700 font-medium transition-colors"
             >
-              View all
+              View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {data.recentInvoices.map((inv) => (
+          </div>
+          <div className="divide-y divide-border">
+            {data.recentInvoices.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No invoices yet
+              </p>
+            ) : (
+              data.recentInvoices.map((inv) => (
                 <Link
                   key={inv.id}
                   href={`/invoices/${inv.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors"
+                  className="flex items-center justify-between px-6 py-3.5 hover:bg-gray-50 transition-colors"
                 >
-                  <div>
-                    <p className="font-medium text-sm">{inv.number}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-foreground">
+                      {inv.number}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
                       {inv.customer}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-sm">
+                  <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                    <StatusBadge status={inv.status} />
+                    <span className="text-sm font-semibold text-foreground tabular-nums">
                       {formatCurrency(inv.total)}
-                    </p>
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                        inv.status === "paid"
-                          ? "bg-green-100 text-green-700"
-                          : inv.status === "overdue"
-                            ? "bg-red-100 text-red-700"
-                            : inv.status === "sent"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {inv.status}
                     </span>
                   </div>
                 </Link>
-              ))}
-              {data.recentInvoices.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No invoices yet
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              ))
+            )}
+          </div>
+        </div>
 
         {/* Recent POs */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Recent Purchase Orders</CardTitle>
+        <div className="bg-white rounded-xl border border-border">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 className="text-base font-semibold text-foreground">
+              Recent Purchase Orders
+            </h2>
             <Link
               href="/purchase-orders"
-              className="text-sm text-primary hover:underline"
+              className="flex items-center gap-1 text-sm text-primary hover:text-blue-700 font-medium transition-colors"
             >
-              View all
+              View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {data.recentPOs.map((po) => (
+          </div>
+          <div className="divide-y divide-border">
+            {data.recentPOs.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No purchase orders yet
+              </p>
+            ) : (
+              data.recentPOs.map((po) => (
                 <Link
                   key={po.id}
                   href={`/purchase-orders/${po.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors"
+                  className="flex items-center justify-between px-6 py-3.5 hover:bg-gray-50 transition-colors"
                 >
-                  <div>
-                    <p className="font-medium text-sm">{po.number}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-foreground">
+                      {po.number}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
                       {po.customer}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-sm">
+                  <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                    <StatusBadge status={po.status} />
+                    <span className="text-sm font-semibold text-foreground tabular-nums">
                       {formatCurrency(po.total)}
-                    </p>
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                        po.status === "received"
-                          ? "bg-green-100 text-green-700"
-                          : po.status === "approved"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : po.status === "submitted"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {po.status}
                     </span>
                   </div>
                 </Link>
-              ))}
-              {data.recentPOs.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No purchase orders yet
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Top Customers */}
       {data.customerRevenue.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Top Customers by Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {data.customerRevenue.map((customer, i) => (
-                <div
-                  key={customer.id}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-muted"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold">
-                      {i + 1}
-                    </span>
-                    <div>
-                      <p className="font-medium text-sm">{customer.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {customer.invoiceCount} invoices
-                      </p>
-                    </div>
-                  </div>
-                  <p className="font-semibold">
-                    {formatCurrency(customer.totalRevenue)}
+        <div className="bg-white rounded-xl border border-border">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 className="text-base font-semibold text-foreground">
+              Top Customers by Revenue
+            </h2>
+            <Link
+              href="/customers"
+              className="flex items-center gap-1 text-sm text-primary hover:text-blue-700 font-medium transition-colors"
+            >
+              View all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="divide-y divide-border">
+            {data.customerRevenue.map((customer, i) => (
+              <div
+                key={customer.id}
+                className="flex items-center gap-4 px-6 py-3.5"
+              >
+                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-primary text-xs font-bold flex-shrink-0">
+                  {i + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-foreground">
+                    {customer.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {customer.invoiceCount} invoice
+                    {customer.invoiceCount !== 1 ? "s" : ""}
                   </p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <p className="text-sm font-semibold text-foreground tabular-nums">
+                  {formatCurrency(customer.totalRevenue)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

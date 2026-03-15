@@ -37,7 +37,8 @@ export const purchaseOrderCreateSchema = z.object({
 export const purchaseOrderUpdateSchema = purchaseOrderCreateSchema.partial();
 
 export const customerCreateSchema = z.object({
-  name: z.string().min(1, "Name is required").max(200, "Name too long"),
+  name: z.string().min(1, "Company name is required").max(200, "Company name too long"),
+  contactName: z.string().max(200, "Contact name too long").optional(),
   email: z.string().email().max(254, "Email too long").optional().or(z.literal("")),
   phone: z.string().max(30, "Phone too long").optional(),
   address: z.string().max(500, "Address too long").optional(),
