@@ -9,7 +9,9 @@ import {
   ShoppingCart,
   Users,
   BarChart3,
+  LogOut,
 } from "lucide-react";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -53,7 +55,8 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-3">
+        <LogoutButton />
         <p className="text-xs text-muted-foreground text-center">
           BillFlow v1.0
         </p>

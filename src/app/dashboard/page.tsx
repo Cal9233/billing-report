@@ -43,6 +43,7 @@ interface ReportData {
     purchased: number;
   }[];
   customerRevenue: {
+    id: string;
     name: string;
     invoiceCount: number;
     totalRevenue: number;
@@ -71,7 +72,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/reports")
+    fetch("/api/reports", { next: { revalidate: 60 } })
       .then((res) => res.json())
       .then(setData)
       .catch(console.error)
@@ -332,7 +333,7 @@ export default function DashboardPage() {
             <div className="space-y-3">
               {data.customerRevenue.map((customer, i) => (
                 <div
-                  key={customer.name}
+                  key={customer.id}
                   className="flex items-center justify-between p-3 rounded-lg hover:bg-muted"
                 >
                   <div className="flex items-center gap-3">

@@ -61,3 +61,15 @@ export type CustomerUpdateInput = z.infer<typeof customerUpdateSchema>;
 
 export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 export type POStatus = "draft" | "submitted" | "approved" | "received" | "cancelled";
+
+// ---- Shared pagination type ----
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}

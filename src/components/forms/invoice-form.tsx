@@ -28,6 +28,13 @@ interface InvoiceFormProps {
   mode: "create" | "edit";
 }
 
+/** Parse a numeric input string, returning 0 for empty/NaN and clamping to [min, max]. */
+function parseNumericInput(value: string, min = 0, max = Infinity): number {
+  const parsed = parseFloat(value);
+  if (isNaN(parsed)) return min;
+  return Math.min(max, Math.max(min, parsed));
+}
+
 export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -210,7 +217,7 @@ export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
                 max="100"
                 value={formData.taxRate}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))
+                  setFormData((prev) => ({ ...prev, taxRate: parseNumericInput(e.target.value, 0, 100) }))
                 }
               />
             </div>
@@ -258,7 +265,7 @@ export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
                       step="0.01"
                       value={item.quantity}
                       onChange={(e) =>
-                        updateLineItem(i, "quantity", parseFloat(e.target.value) || 0)
+                        updateLineItem(i, "quantity", parseNumericInput(e.target.value))
                       }
                       aria-label={`Quantity for line item ${i + 1}`}
                       required
@@ -273,7 +280,7 @@ export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
                       step="0.01"
                       value={item.unitPrice}
                       onChange={(e) =>
-                        updateLineItem(i, "unitPrice", parseFloat(e.target.value) || 0)
+                        updateLineItem(i, "unitPrice", parseNumericInput(e.target.value))
                       }
                       aria-label={`Unit price for line item ${i + 1}`}
                       required

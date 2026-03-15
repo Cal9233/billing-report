@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { parseISO } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -13,7 +14,9 @@ export function formatCurrency(amount: number): string {
 }
 
 export function formatDate(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
+  // Use parseISO for strings to avoid timezone shifting (e.g. "2024-03-15"
+  // parsed by new Date() can shift to the previous day in western timezones)
+  const d = typeof date === "string" ? parseISO(date) : date;
   return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",

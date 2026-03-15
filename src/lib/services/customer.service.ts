@@ -1,19 +1,9 @@
 import prisma from "@/lib/db/client";
-import type { customerCreateSchema, customerUpdateSchema } from "@/types";
+import type { customerCreateSchema, customerUpdateSchema, PaginatedResponse } from "@/types";
 import type { z } from "zod";
 
 export type CustomerCreateInput = z.infer<typeof customerCreateSchema>;
 export type CustomerUpdateInput = z.infer<typeof customerUpdateSchema>;
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
 
 export async function listCustomers(
   page: number = 1,

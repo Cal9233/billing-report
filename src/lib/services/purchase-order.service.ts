@@ -1,20 +1,10 @@
 import prisma from "@/lib/db/client";
 import { generatePONumber, calculateLineItemAmount, calculateTotals } from "@/lib/utils";
-import type { purchaseOrderCreateSchema, purchaseOrderUpdateSchema } from "@/types";
+import type { purchaseOrderCreateSchema, purchaseOrderUpdateSchema, PaginatedResponse } from "@/types";
 import type { z } from "zod";
 
 export type POCreateInput = z.infer<typeof purchaseOrderCreateSchema>;
 export type POUpdateInput = z.infer<typeof purchaseOrderUpdateSchema>;
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
 
 export async function listPurchaseOrders(
   filters?: { status?: string; customerId?: string },
@@ -33,7 +23,6 @@ export async function listPurchaseOrders(
       where,
       include: {
         customer: { select: { id: true, name: true, email: true } },
-        lineItems: true,
       },
       orderBy: { createdAt: "desc" },
       skip: (validPage - 1) * validLimit,

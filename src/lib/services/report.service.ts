@@ -117,7 +117,7 @@ export async function generateReport(): Promise<ReportData> {
   const monthlyData: MonthlyData[] = [];
   for (let i = 11; i >= 0; i--) {
     const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1); // exclusive upper bound (first day of next month)
     const monthLabel = monthStart.toLocaleDateString("en-US", {
       month: "short",
       year: "numeric",
@@ -125,12 +125,12 @@ export async function generateReport(): Promise<ReportData> {
 
     const monthInvoices = invoices.filter((inv) => {
       const d = new Date(inv.issueDate);
-      return d >= monthStart && d <= monthEnd;
+      return d >= monthStart && d < monthEnd;
     });
 
     const monthPOs = purchaseOrders.filter((po) => {
       const d = new Date(po.issueDate);
-      return d >= monthStart && d <= monthEnd;
+      return d >= monthStart && d < monthEnd;
     });
 
     monthlyData.push({

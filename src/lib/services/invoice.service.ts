@@ -1,20 +1,10 @@
 import prisma from "@/lib/db/client";
 import { generateInvoiceNumber, calculateLineItemAmount, calculateTotals } from "@/lib/utils";
-import type { invoiceCreateSchema, invoiceUpdateSchema } from "@/types";
+import type { invoiceCreateSchema, invoiceUpdateSchema, PaginatedResponse } from "@/types";
 import type { z } from "zod";
 
 export type InvoiceCreateInput = z.infer<typeof invoiceCreateSchema>;
 export type InvoiceUpdateInput = z.infer<typeof invoiceUpdateSchema>;
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
 
 export async function listInvoices(
   filters?: { status?: string; customerId?: string },
@@ -33,7 +23,6 @@ export async function listInvoices(
       where,
       include: {
         customer: { select: { id: true, name: true, email: true } },
-        lineItems: true,
       },
       orderBy: { createdAt: "desc" },
       skip: (validPage - 1) * validLimit,
