@@ -57,11 +57,32 @@ const {
   mockPOUpdate: vi.fn(),
 }));
 
+// Mock auth middleware so route handlers don't call headers() outside Next.js context
+vi.mock("@/lib/middleware/api-protection", () => ({
+  protectAPI: vi.fn().mockResolvedValue({
+    error: null,
+    session: {
+      user: {
+        id: "user-1",
+        email: "test@example.com",
+        name: "Test User",
+        role: "admin",
+        organizationId: "org-1",
+        organizationName: "Test Org",
+        organizationSlug: "test-org",
+      },
+    },
+  }),
+  protectAPILegacy: vi.fn().mockResolvedValue(null),
+  protectPublicAPI: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/lib/db/client", () => ({
   default: {
     $transaction: (...args: unknown[]) => mockTransaction(...args),
     customer: {
       findUnique: (...args: unknown[]) => mockCustomerFindUnique(...args),
+      findFirst: (...args: unknown[]) => mockCustomerFindUnique(...args),
       findMany: (...args: unknown[]) => mockCustomerFindMany(...args),
       count: (...args: unknown[]) => mockCustomerCount(...args),
       update: (...args: unknown[]) => mockCustomerUpdate(...args),
@@ -70,6 +91,7 @@ vi.mock("@/lib/db/client", () => ({
     },
     invoice: {
       findUnique: vi.fn().mockResolvedValue({ id: "inv-1" }),
+      findFirst: vi.fn().mockResolvedValue({ id: "inv-1" }),
       findMany: (...args: unknown[]) => mockInvoiceFindMany(...args),
       count: (...args: unknown[]) => mockInvoiceCount(...args),
       create: (...args: unknown[]) => mockInvoiceCreate(...args),
@@ -77,6 +99,7 @@ vi.mock("@/lib/db/client", () => ({
     },
     purchaseOrder: {
       findUnique: vi.fn().mockResolvedValue({ id: "po-1" }),
+      findFirst: vi.fn().mockResolvedValue({ id: "po-1" }),
       findMany: (...args: unknown[]) => mockPOFindMany(...args),
       count: (...args: unknown[]) => mockPOCount(...args),
       create: (...args: unknown[]) => mockPOCreate(...args),
@@ -290,6 +313,8 @@ describe("M4: Customer PUT endpoint", () => {
 
   it("updates a customer successfully", async () => {
     const updated = { id: "cust-1", companyName: "Updated Corp", email: "new@test.com", _count: { invoices: 0, purchaseOrders: 0 } };
+    // updateCustomer calls findFirst to verify org ownership before updating
+    mockCustomerFindUnique.mockResolvedValueOnce({ id: "cust-1" });
     mockCustomerUpdate.mockResolvedValueOnce(updated);
 
     const req = makeRequest("http://localhost:3000/api/customers/cust-1", {

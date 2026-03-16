@@ -40,6 +40,7 @@ const {
   mockLineItemDeleteMany,
   mockPOLineItemDeleteMany,
   mockTransaction,
+  mockProtectAPI,
 } = vi.hoisted(() => ({
   mockInvoiceFindMany: vi.fn().mockResolvedValue([]),
   mockInvoiceCount: vi.fn().mockResolvedValue(0),
@@ -62,6 +63,28 @@ const {
   mockLineItemDeleteMany: vi.fn().mockResolvedValue({ count: 0 }),
   mockPOLineItemDeleteMany: vi.fn().mockResolvedValue({ count: 0 }),
   mockTransaction: vi.fn(),
+  mockProtectAPI: vi.fn().mockResolvedValue({
+    error: null,
+    session: {
+      user: {
+        id: "user-1",
+        email: "test@example.com",
+        name: "Test User",
+        role: "admin",
+        organizationId: "org-1",
+        organizationName: "Test Org",
+        organizationSlug: "test-org",
+      },
+    },
+  }),
+}));
+
+// Mock auth middleware so route handlers don't call headers() outside Next.js context
+// Uses hoisted mockProtectAPI so beforeEach can re-apply it after vi.resetAllMocks()
+vi.mock("@/lib/middleware/api-protection", () => ({
+  protectAPI: mockProtectAPI,
+  protectAPILegacy: vi.fn().mockResolvedValue(null),
+  protectPublicAPI: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("@/lib/db/client", () => ({
@@ -71,6 +94,7 @@ vi.mock("@/lib/db/client", () => ({
       findMany: (...args: unknown[]) => mockInvoiceFindMany(...args),
       count: (...args: unknown[]) => mockInvoiceCount(...args),
       findUnique: (...args: unknown[]) => mockInvoiceFindUnique(...args),
+      findFirst: (...args: unknown[]) => mockInvoiceFindUnique(...args),
       create: (...args: unknown[]) => mockInvoiceCreate(...args),
       update: (...args: unknown[]) => mockInvoiceUpdate(...args),
       delete: (...args: unknown[]) => mockInvoiceDelete(...args),
@@ -79,6 +103,7 @@ vi.mock("@/lib/db/client", () => ({
       findMany: (...args: unknown[]) => mockPOFindMany(...args),
       count: (...args: unknown[]) => mockPOCount(...args),
       findUnique: (...args: unknown[]) => mockPOFindUnique(...args),
+      findFirst: (...args: unknown[]) => mockPOFindUnique(...args),
       create: (...args: unknown[]) => mockPOCreate(...args),
       update: (...args: unknown[]) => mockPOUpdate(...args),
       delete: (...args: unknown[]) => mockPODelete(...args),
@@ -87,6 +112,7 @@ vi.mock("@/lib/db/client", () => ({
       findMany: (...args: unknown[]) => mockCustomerFindMany(...args),
       count: (...args: unknown[]) => mockCustomerCount(...args),
       findUnique: (...args: unknown[]) => mockCustomerFindUnique(...args),
+      findFirst: (...args: unknown[]) => mockCustomerFindUnique(...args),
       create: (...args: unknown[]) => mockCustomerCreate(...args),
       update: (...args: unknown[]) => mockCustomerUpdate(...args),
       delete: (...args: unknown[]) => mockCustomerDelete(...args),
@@ -136,7 +162,7 @@ import {
 
 beforeEach(() => {
   vi.resetAllMocks();
-  // Re-apply default resolved values after reset
+  // Re-apply default resolved values after reset (vi.resetAllMocks clears implementations)
   mockInvoiceFindMany.mockResolvedValue([]);
   mockInvoiceCount.mockResolvedValue(0);
   mockInvoiceFindUnique.mockResolvedValue(null);
@@ -148,6 +174,21 @@ beforeEach(() => {
   mockCustomerFindUnique.mockResolvedValue(null);
   mockLineItemDeleteMany.mockResolvedValue({ count: 0 });
   mockPOLineItemDeleteMany.mockResolvedValue({ count: 0 });
+  // Re-apply auth mock — vi.resetAllMocks wipes mockResolvedValue on hoisted fns
+  mockProtectAPI.mockResolvedValue({
+    error: null,
+    session: {
+      user: {
+        id: "user-1",
+        email: "test@example.com",
+        name: "Test User",
+        role: "admin",
+        organizationId: "org-1",
+        organizationName: "Test Org",
+        organizationSlug: "test-org",
+      },
+    },
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -590,6 +631,7 @@ describe("Invoice PUT /api/invoices/[id]", () => {
 
 
   it("update status field returns 200", async () => {
+    mockInvoiceFindUnique.mockResolvedValueOnce({ id: "inv-1" }); // service findFirst existence check
     mockInvoiceUpdate.mockResolvedValueOnce(makeInvoiceFixture({ status: "sent" }));
 
     const res = await invoicePUT(
@@ -602,6 +644,7 @@ describe("Invoice PUT /api/invoices/[id]", () => {
   });
 
   it("update with line items calls transaction path", async () => {
+    mockInvoiceFindUnique.mockResolvedValueOnce({ id: "inv-1" }); // service findFirst existence check
     mockTransaction.mockImplementationOnce(async (cb: (tx: unknown) => unknown) => {
       const txClient = {
         lineItem: { deleteMany: mockLineItemDeleteMany },
@@ -623,6 +666,7 @@ describe("Invoice PUT /api/invoices/[id]", () => {
   });
 
   it("empty body returns 400 (M6 fix)", async () => {
+    mockInvoiceFindUnique.mockResolvedValueOnce({ id: "inv-1" }); // service findFirst, then "No fields" thrown
     const res = await invoicePUT(
       makeRequest(`${BASE}/api/invoices/inv-1`, {}, "PUT"),
       { params: Promise.resolve({ id: "inv-1" }) }
@@ -653,6 +697,7 @@ describe("Invoice PUT /api/invoices/[id]", () => {
   });
 
   it("invalid issueDate string → 400", async () => {
+    mockInvoiceFindUnique.mockResolvedValueOnce({ id: "inv-1" }); // service findFirst, then "Invalid issueDate" thrown
     const res = await invoicePUT(
       makeRequest(`${BASE}/api/invoices/inv-1`, { issueDate: "not-a-date" }, "PUT"),
       { params: Promise.resolve({ id: "inv-1" }) }
@@ -663,6 +708,7 @@ describe("Invoice PUT /api/invoices/[id]", () => {
   });
 
   it("invalid dueDate string → 400", async () => {
+    mockInvoiceFindUnique.mockResolvedValueOnce({ id: "inv-1" }); // service findFirst, then "Invalid dueDate" thrown
     const res = await invoicePUT(
       makeRequest(`${BASE}/api/invoices/inv-1`, { dueDate: "garbage" }, "PUT"),
       { params: Promise.resolve({ id: "inv-1" }) }
@@ -673,6 +719,7 @@ describe("Invoice PUT /api/invoices/[id]", () => {
   });
 
   it("valid ISO date strings are accepted", async () => {
+    mockInvoiceFindUnique.mockResolvedValueOnce({ id: "inv-1" }); // service findFirst existence check
     mockInvoiceUpdate.mockResolvedValueOnce(makeInvoiceFixture());
 
     const res = await invoicePUT(
@@ -704,6 +751,7 @@ describe("Invoice DELETE /api/invoices/[id]", () => {
 
 
   it("valid id deletes successfully and returns success=true", async () => {
+    mockInvoiceFindUnique.mockResolvedValueOnce({ id: "inv-1" }); // service findFirst existence check
     mockInvoiceDelete.mockResolvedValueOnce({ id: "inv-1" });
 
     const res = await invoiceDELETE(
@@ -738,6 +786,7 @@ describe("Invoice DELETE /api/invoices/[id]", () => {
   });
 
   it("non-P2025 database error returns 500", async () => {
+    mockInvoiceFindUnique.mockResolvedValueOnce({ id: "inv-1" }); // service findFirst passes, then delete throws
     mockInvoiceDelete.mockRejectedValueOnce(new Error("disk full"));
 
     const res = await invoiceDELETE(
@@ -943,6 +992,7 @@ describe("Purchase Order PUT /api/purchase-orders/[id]", () => {
 
 
   it("update status returns 200", async () => {
+    mockPOFindUnique.mockResolvedValueOnce({ id: "po-1" }); // service findFirst existence check
     mockPOUpdate.mockResolvedValueOnce(makePOFixture({ status: "approved" }));
 
     const res = await poPUT(
@@ -955,6 +1005,7 @@ describe("Purchase Order PUT /api/purchase-orders/[id]", () => {
   });
 
   it("update with line items uses transaction path", async () => {
+    mockPOFindUnique.mockResolvedValueOnce({ id: "po-1" }); // service findFirst existence check
     mockTransaction.mockImplementationOnce(async (cb: (tx: unknown) => unknown) => {
       const txClient = {
         pOLineItem: { deleteMany: mockPOLineItemDeleteMany },
@@ -976,6 +1027,7 @@ describe("Purchase Order PUT /api/purchase-orders/[id]", () => {
   });
 
   it("empty body returns 400 (M6 fix)", async () => {
+    mockPOFindUnique.mockResolvedValueOnce({ id: "po-1" }); // service findFirst, then "No fields" thrown
     const res = await poPUT(
       makeRequest(`${BASE}/api/purchase-orders/po-1`, {}, "PUT"),
       { params: Promise.resolve({ id: "po-1" }) }
@@ -996,6 +1048,7 @@ describe("Purchase Order PUT /api/purchase-orders/[id]", () => {
   });
 
   it("invalid issueDate → 400", async () => {
+    mockPOFindUnique.mockResolvedValueOnce({ id: "po-1" }); // service findFirst, then "Invalid issueDate" thrown
     const res = await poPUT(
       makeRequest(`${BASE}/api/purchase-orders/po-1`, { issueDate: "bad-date" }, "PUT"),
       { params: Promise.resolve({ id: "po-1" }) }
@@ -1006,6 +1059,7 @@ describe("Purchase Order PUT /api/purchase-orders/[id]", () => {
   });
 
   it("invalid dueDate → 400", async () => {
+    mockPOFindUnique.mockResolvedValueOnce({ id: "po-1" }); // service findFirst, then "Invalid dueDate" thrown
     const res = await poPUT(
       makeRequest(`${BASE}/api/purchase-orders/po-1`, { dueDate: "garbage" }, "PUT"),
       { params: Promise.resolve({ id: "po-1" }) }
@@ -1028,6 +1082,7 @@ describe("Purchase Order DELETE /api/purchase-orders/[id]", () => {
 
 
   it("valid id deletes successfully", async () => {
+    mockPOFindUnique.mockResolvedValueOnce({ id: "po-1" }); // service findFirst existence check
     mockPODelete.mockResolvedValueOnce({ id: "po-1" });
 
     const res = await poDELETE(
@@ -1062,6 +1117,7 @@ describe("Purchase Order DELETE /api/purchase-orders/[id]", () => {
   });
 
   it("non-P2025 error returns 500", async () => {
+    mockPOFindUnique.mockResolvedValueOnce({ id: "po-1" }); // service findFirst passes, then delete throws
     mockPODelete.mockRejectedValueOnce(new Error("DB crash"));
 
     const res = await poDELETE(
@@ -1251,6 +1307,7 @@ describe("Customer PUT /api/customers/[id]", () => {
 
 
   it("update name returns 200", async () => {
+    mockCustomerFindUnique.mockResolvedValueOnce({ id: "cust-1" }); // service findFirst existence check
     const updated = makeCustomerFixture({ companyName: "New Name Corp" });
     mockCustomerUpdate.mockResolvedValueOnce(updated);
 
@@ -1264,6 +1321,7 @@ describe("Customer PUT /api/customers/[id]", () => {
   });
 
   it("update email returns 200", async () => {
+    mockCustomerFindUnique.mockResolvedValueOnce({ id: "cust-1" }); // service findFirst existence check
     const updated = makeCustomerFixture({ email: "new@example.com" });
     mockCustomerUpdate.mockResolvedValueOnce(updated);
 
@@ -1369,9 +1427,10 @@ describe("Customer DELETE /api/customers/[id]", () => {
       { params: Promise.resolve({ id: "cust-1" }) }
     );
     expect(res.status).toBe(409);
+    // Route returns error message with counts embedded — check message contains both counts
     const body = await res.json();
-    expect(body.details[0].invoices).toBe(5);
-    expect(body.details[0].purchaseOrders).toBe(3);
+    expect(body.error).toContain("5");
+    expect(body.error).toContain("3");
   });
 });
 
@@ -1502,8 +1561,9 @@ describe("Stress: mixed concurrent load (GET + POST + PUT)", () => {
       mockCustomerFindUnique.mockResolvedValueOnce({ id: "cust-1" });
       mockInvoiceCreate.mockResolvedValueOnce(makeInvoiceFixture({ id: `inv-mixed-${i}` }));
     }
-    // Setup mocks for 5 PUT calls
+    // Setup mocks for 5 PUT calls (service calls findFirst before update)
     for (let i = 0; i < 5; i++) {
+      mockInvoiceFindUnique.mockResolvedValueOnce({ id: `inv-${i}` }); // service findFirst existence check
       mockInvoiceUpdate.mockResolvedValueOnce(makeInvoiceFixture({ status: "sent" }));
     }
 

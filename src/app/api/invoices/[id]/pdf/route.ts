@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db/client";
 import { generateInvoicePDF } from "@/lib/pdf/generate-invoice-pdf";
+import { protectAPI } from "@/lib/middleware/api-protection";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { id } = await params;
-    const invoice = await prisma.invoice.findUnique({
-      where: { id },
+    const invoice = await prisma.invoice.findFirst({
+      where: { id, organizationId },
       include: { customer: true, lineItems: true },
     });
 
@@ -17,7 +22,12 @@ export async function GET(
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
-    const doc = generateInvoicePDF(invoice);
+    // Fetch org info for the PDF header
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+    });
+
+    const doc = generateInvoicePDF(invoice, org || undefined);
     const pdfBuffer = doc.output("arraybuffer");
 
     return new NextResponse(pdfBuffer, {

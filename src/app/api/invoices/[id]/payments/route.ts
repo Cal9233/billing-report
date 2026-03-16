@@ -11,14 +11,13 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const error = await protectAPI(request);
-  if (error) {
-    return error;
-  }
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
 
   try {
     const { id } = await params;
-    const summary = await getPaymentSummary(id);
+    const summary = await getPaymentSummary(id, organizationId);
     return NextResponse.json(summary);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Get payment error";
@@ -30,17 +29,16 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const error = await protectAPI(request);
-  if (error) {
-    return error;
-  }
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
 
   try {
     const { id } = await params;
     const body = await request.json();
     const validated = paymentCreateSchema.parse(body);
 
-    const payment = await createPayment(id, validated);
+    const payment = await createPayment(id, organizationId, validated);
     return NextResponse.json(payment, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Create payment error";
@@ -52,10 +50,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const error = await protectAPI(request);
-  if (error) {
-    return error;
-  }
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
 
   try {
     const paymentId = request.nextUrl.searchParams.get("paymentId");
@@ -66,7 +63,7 @@ export async function DELETE(
       );
     }
 
-    await deletePayment(paymentId);
+    await deletePayment(paymentId, organizationId);
     return NextResponse.json({ message: "Payment deleted" });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Delete payment error";

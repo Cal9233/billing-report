@@ -7,6 +7,7 @@ export type InvoiceCreateInput = z.infer<typeof invoiceCreateSchema>;
 export type InvoiceUpdateInput = z.infer<typeof invoiceUpdateSchema>;
 
 export async function listInvoices(
+  organizationId: string,
   filters?: { status?: string; customerId?: string },
   page: number = 1,
   limit: number = 20
@@ -14,7 +15,7 @@ export async function listInvoices(
   const validPage = Math.max(1, page);
   const validLimit = Math.min(100, Math.max(1, limit));
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { organizationId };
   if (filters?.status) where.status = filters.status;
   if (filters?.customerId) where.customerId = filters.customerId;
 
@@ -42,9 +43,9 @@ export async function listInvoices(
   };
 }
 
-export async function getInvoiceById(id: string) {
-  return prisma.invoice.findUnique({
-    where: { id },
+export async function getInvoiceById(id: string, organizationId: string) {
+  return prisma.invoice.findFirst({
+    where: { id, organizationId },
     include: {
       customer: true,
       lineItems: true,
@@ -52,10 +53,10 @@ export async function getInvoiceById(id: string) {
   });
 }
 
-export async function createInvoice(data: InvoiceCreateInput) {
-  // Validate customer exists
-  const customer = await prisma.customer.findUnique({
-    where: { id: data.customerId },
+export async function createInvoice(data: InvoiceCreateInput, organizationId: string) {
+  // Validate customer exists AND belongs to the same org
+  const customer = await prisma.customer.findFirst({
+    where: { id: data.customerId, organizationId },
     select: { id: true },
   });
   if (!customer) {
@@ -94,6 +95,7 @@ export async function createInvoice(data: InvoiceCreateInput) {
           notes: data.notes || null,
           terms: data.terms || null,
           customerId: data.customerId,
+          organizationId,
           lineItems: {
             create: data.lineItems.map((item) => ({
               description: item.description,
@@ -127,7 +129,16 @@ export async function createInvoice(data: InvoiceCreateInput) {
   throw new Error("Failed to generate unique invoice number after retries");
 }
 
-export async function updateInvoice(id: string, data: Partial<InvoiceUpdateInput>) {
+export async function updateInvoice(id: string, organizationId: string, data: Partial<InvoiceUpdateInput>) {
+  // Verify invoice belongs to org
+  const existing = await prisma.invoice.findFirst({
+    where: { id, organizationId },
+    select: { id: true },
+  });
+  if (!existing) {
+    throw new Error("Invoice not found");
+  }
+
   const updateData: Record<string, unknown> = {};
 
   if (data.status !== undefined) updateData.status = data.status;
@@ -152,8 +163,8 @@ export async function updateInvoice(id: string, data: Partial<InvoiceUpdateInput
   if (data.notes !== undefined) updateData.notes = data.notes;
   if (data.terms !== undefined) updateData.terms = data.terms;
   if (data.customerId !== undefined) {
-    const customer = await prisma.customer.findUnique({
-      where: { id: data.customerId },
+    const customer = await prisma.customer.findFirst({
+      where: { id: data.customerId, organizationId },
       select: { id: true },
     });
     if (!customer) {
@@ -210,7 +221,16 @@ export async function updateInvoice(id: string, data: Partial<InvoiceUpdateInput
   });
 }
 
-export async function deleteInvoice(id: string) {
+export async function deleteInvoice(id: string, organizationId: string) {
+  // Verify invoice belongs to org
+  const existing = await prisma.invoice.findFirst({
+    where: { id, organizationId },
+    select: { id: true },
+  });
+  if (!existing) {
+    throw new Error("Invoice not found");
+  }
+
   return prisma.invoice.delete({
     where: { id },
   });

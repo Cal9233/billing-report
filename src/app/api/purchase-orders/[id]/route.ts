@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { purchaseOrderUpdateSchema, ZodError } from "@/types";
 import { getPurchaseOrderById, updatePurchaseOrder, deletePurchaseOrder } from "@/lib/services/purchase-order.service";
+import { protectAPI } from "@/lib/middleware/api-protection";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { id } = await params;
-    const po = await getPurchaseOrderById(id);
+    const po = await getPurchaseOrderById(id, organizationId);
 
     if (!po) {
       return NextResponse.json(
@@ -31,12 +36,16 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { id } = await params;
     const body = await request.json();
     const validated = purchaseOrderUpdateSchema.parse(body);
 
-    const po = await updatePurchaseOrder(id, validated);
+    const po = await updatePurchaseOrder(id, organizationId, validated);
     return NextResponse.json(po);
   } catch (error) {
     if (error instanceof SyntaxError) {
@@ -50,6 +59,9 @@ export async function PUT(
         { error: "Validation failed", details: error },
         { status: 400 }
       );
+    }
+    if (error instanceof Error && error.message === "Purchase order not found") {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     // Prisma P2025 = Record not found
     if (
@@ -88,14 +100,21 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const result = await protectAPI(request, { roles: ["admin"] });
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { id } = await params;
-    await deletePurchaseOrder(id);
+    await deletePurchaseOrder(id, organizationId);
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof Error && error.message === "Purchase order not found") {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
     // Prisma P2025 = Record not found
     if (
       error instanceof Error &&

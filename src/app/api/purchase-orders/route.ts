@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { purchaseOrderCreateSchema, ZodError } from "@/types";
 import { listPurchaseOrders, createPurchaseOrder } from "@/lib/services/purchase-order.service";
+import { protectAPI } from "@/lib/middleware/api-protection";
 
 export async function GET(request: NextRequest) {
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || undefined;
@@ -10,8 +15,8 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
 
-    const result = await listPurchaseOrders({ status, customerId }, page, limit);
-    return NextResponse.json(result);
+    const data = await listPurchaseOrders(organizationId, { status, customerId }, page, limit);
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Failed to fetch purchase orders:", error);
     return NextResponse.json(
@@ -22,11 +27,15 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const body = await request.json();
     const validated = purchaseOrderCreateSchema.parse(body);
 
-    const po = await createPurchaseOrder(validated);
+    const po = await createPurchaseOrder(validated, organizationId);
     return NextResponse.json(po, { status: 201 });
   } catch (error) {
     if (error instanceof SyntaxError) {

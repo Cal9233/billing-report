@@ -47,10 +47,11 @@ export interface ReportData {
   customerCount: number;
 }
 
-export async function generateReport(): Promise<ReportData> {
+export async function generateReport(organizationId: string): Promise<ReportData> {
   // Fetch invoices and POs with only the fields needed for aggregation (no lineItems)
   const [invoices, purchaseOrders, customers, customerCount] = await Promise.all([
     prisma.invoice.findMany({
+      where: { organizationId },
       select: {
         id: true,
         invoiceNumber: true,
@@ -63,6 +64,7 @@ export async function generateReport(): Promise<ReportData> {
       orderBy: { createdAt: "desc" },
     }),
     prisma.purchaseOrder.findMany({
+      where: { organizationId },
       select: {
         id: true,
         poNumber: true,
@@ -75,9 +77,10 @@ export async function generateReport(): Promise<ReportData> {
       orderBy: { createdAt: "desc" },
     }),
     prisma.customer.findMany({
+      where: { organizationId },
       select: { id: true, companyName: true },
     }),
-    prisma.customer.count(),
+    prisma.customer.count({ where: { organizationId } }),
   ]);
 
   // Invoice summary

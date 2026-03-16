@@ -22,11 +22,12 @@ export interface OverdueSummary {
   invoices: OverdueInvoice[];
 }
 
-export async function getOverdueInvoices(): Promise<OverdueInvoice[]> {
+export async function getOverdueInvoices(organizationId: string): Promise<OverdueInvoice[]> {
   const now = new Date();
 
   const invoices = await prisma.invoice.findMany({
     where: {
+      organizationId,
       dueDate: {
         lt: now,
       },
@@ -69,8 +70,8 @@ export async function getOverdueInvoices(): Promise<OverdueInvoice[]> {
   });
 }
 
-export async function getOverdueSummary(): Promise<OverdueSummary> {
-  const overdueInvoices = await getOverdueInvoices();
+export async function getOverdueSummary(organizationId: string): Promise<OverdueSummary> {
+  const overdueInvoices = await getOverdueInvoices(organizationId);
 
   const summary: OverdueSummary = {
     totalOverdueInvoices: overdueInvoices.length,
@@ -107,18 +108,28 @@ export async function getOverdueSummary(): Promise<OverdueSummary> {
   return summary;
 }
 
-export async function markInvoiceAsOverdue(invoiceId: string): Promise<void> {
+export async function markInvoiceAsOverdue(invoiceId: string, organizationId: string): Promise<void> {
+  // Verify invoice belongs to org
+  const invoice = await prisma.invoice.findFirst({
+    where: { id: invoiceId, organizationId },
+    select: { id: true },
+  });
+  if (!invoice) {
+    throw new Error("Invoice not found");
+  }
+
   await prisma.invoice.update({
     where: { id: invoiceId },
     data: { status: "overdue" },
   });
 }
 
-export async function updateOverdueStatuses(): Promise<number> {
+export async function updateOverdueStatuses(organizationId: string): Promise<number> {
   const now = new Date();
 
   const result = await prisma.invoice.updateMany({
     where: {
+      organizationId,
       dueDate: {
         lt: now,
       },

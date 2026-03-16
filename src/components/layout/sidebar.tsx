@@ -39,7 +39,7 @@ const navigation = [
   },
   {
     name: "Payments",
-    href: "/invoices?status=paid",
+    href: "/payments",
     icon: CreditCard,
   },
 ];
@@ -65,7 +65,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
             <h1 className="text-base font-semibold text-foreground leading-none">
               BillFlow
             </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Dual Aero</p>
+            <p className="text-xs text-muted-foreground mt-0.5">BillFlow</p>
           </div>
         </div>
         <SearchBox />

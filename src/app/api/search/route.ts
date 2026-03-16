@@ -3,11 +3,9 @@ import { globalSearch } from "@/lib/services/search.service";
 import { protectAPI } from "@/lib/middleware/api-protection";
 
 export async function GET(request: NextRequest) {
-  // Protect the endpoint
-  const error = await protectAPI(request);
-  if (error) {
-    return error;
-  }
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
 
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -20,7 +18,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const results = await globalSearch(query);
+    const results = await globalSearch(query, organizationId);
 
     return NextResponse.json({ results });
   } catch (error) {

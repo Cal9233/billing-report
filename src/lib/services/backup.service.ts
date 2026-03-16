@@ -7,9 +7,11 @@ export interface ExportOptions {
 }
 
 export async function exportInvoices(
+  organizationId: string,
   options: ExportOptions = { format: "csv" }
 ): Promise<string> {
   const invoices = await prisma.invoice.findMany({
+    where: { organizationId },
     include: {
       customer: true,
       ...(options.includeLineItems ? { lineItems: true } : {}),
@@ -40,9 +42,11 @@ export async function exportInvoices(
 }
 
 export async function exportPurchaseOrders(
+  organizationId: string,
   options: ExportOptions = { format: "csv" }
 ): Promise<string> {
   const purchaseOrders = await prisma.purchaseOrder.findMany({
+    where: { organizationId },
     include: {
       customer: true,
       ...(options.includeLineItems ? { lineItems: true } : {}),
@@ -75,9 +79,11 @@ export async function exportPurchaseOrders(
 }
 
 export async function exportCustomers(
+  organizationId: string,
   options: ExportOptions = { format: "csv" }
 ): Promise<string> {
   const customers = await prisma.customer.findMany({
+    where: { organizationId },
     orderBy: { companyName: "asc" },
   });
 
@@ -100,26 +106,31 @@ export async function exportCustomers(
   return stringify(rows, { header: true }) as string;
 }
 
-export async function createFullBackup(): Promise<string> {
+export async function createFullBackup(organizationId: string): Promise<string> {
   const [invoices, purchaseOrders, customers] = await Promise.all([
     prisma.invoice.findMany({
+      where: { organizationId },
       include: {
         customer: true,
         lineItems: true,
       },
     }),
     prisma.purchaseOrder.findMany({
+      where: { organizationId },
       include: {
         customer: true,
         lineItems: true,
       },
     }),
-    prisma.customer.findMany(),
+    prisma.customer.findMany({
+      where: { organizationId },
+    }),
   ]);
 
   const backup = {
     exportDate: new Date().toISOString(),
-    version: "1.0",
+    version: "2.0",
+    organizationId,
     data: {
       customers,
       invoices,
@@ -131,7 +142,8 @@ export async function createFullBackup(): Promise<string> {
 }
 
 export async function restoreFromBackup(
-  backupJson: string
+  backupJson: string,
+  organizationId: string
 ): Promise<{ success: boolean; message: string; errors: string[] }> {
   const errors: string[] = [];
 
@@ -151,14 +163,14 @@ export async function restoreFromBackup(
       for (const cust of backup.data.customers) {
         try {
           const existingCustomer = await prisma.customer.findFirst({
-            where: { email: cust.email || undefined },
+            where: { email: cust.email || undefined, organizationId },
           });
 
           if (!existingCustomer) {
             // Only create if not exists (preserve existing data)
-            const { createdAt, updatedAt, ...custData } = cust;
+            const { createdAt, updatedAt, organizationId: _orgId, ...custData } = cust;
             await prisma.customer.create({
-              data: custData,
+              data: { ...custData, organizationId },
             });
           }
         } catch (err) {

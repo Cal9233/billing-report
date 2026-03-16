@@ -29,16 +29,38 @@ const {
   mockTransaction: vi.fn(),
 }));
 
+// Mock auth middleware so route handlers don't call headers() outside Next.js context
+vi.mock("@/lib/middleware/api-protection", () => ({
+  protectAPI: vi.fn().mockResolvedValue({
+    error: null,
+    session: {
+      user: {
+        id: "user-1",
+        email: "test@example.com",
+        name: "Test User",
+        role: "admin",
+        organizationId: "org-1",
+        organizationName: "Test Org",
+        organizationSlug: "test-org",
+      },
+    },
+  }),
+  protectAPILegacy: vi.fn().mockResolvedValue(null),
+  protectPublicAPI: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/lib/db/client", () => ({
   default: {
     $transaction: (...args: unknown[]) => mockTransaction(...args),
     invoice: {
       findUnique: vi.fn().mockResolvedValue({ id: "inv-1" }),
+      findFirst: vi.fn().mockResolvedValue({ id: "inv-1" }),
       update: (...args: unknown[]) => mockInvoiceUpdateDirect(...args),
       delete: vi.fn().mockResolvedValue({ id: "inv-1" }),
     },
     purchaseOrder: {
       findUnique: vi.fn().mockResolvedValue({ id: "po-1" }),
+      findFirst: vi.fn().mockResolvedValue({ id: "po-1" }),
       update: (...args: unknown[]) => mockPOUpdateDirect(...args),
       delete: vi.fn().mockResolvedValue({ id: "po-1" }),
     },

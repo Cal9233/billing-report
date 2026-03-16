@@ -3,10 +3,9 @@ import { exportInvoices } from "@/lib/services/backup.service";
 import { protectAPI } from "@/lib/middleware/api-protection";
 
 export async function GET(request: NextRequest) {
-  const error = await protectAPI(request);
-  if (error) {
-    return error;
-  }
+  const result = await protectAPI(request, { roles: ["admin"] });
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
 
   try {
     const format = request.nextUrl.searchParams.get("format") as
@@ -14,7 +13,7 @@ export async function GET(request: NextRequest) {
       | "json"
       | null;
 
-    const csv = await exportInvoices({
+    const csv = await exportInvoices(organizationId, {
       format: format || "csv",
       includeLineItems: true,
     });

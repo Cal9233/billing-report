@@ -23,6 +23,7 @@ const NOW = new Date();
 const CREATED_AT = new Date("2024-01-01T00:00:00.000Z");
 const UPDATED_AT = new Date("2024-01-02T00:00:00.000Z");
 const DUE_DATE = new Date("2024-02-01T00:00:00.000Z");
+const TEST_ORG_ID = "org-test-123";
 
 /** Build a minimal Invoice mock with all required schema fields. */
 function makeInvoice(overrides: {
@@ -42,6 +43,7 @@ function makeInvoice(overrides: {
     taxAmount: 0,
     notes: null,
     terms: null,
+    organizationId: TEST_ORG_ID,
     createdAt: CREATED_AT,
     updatedAt: UPDATED_AT,
   };
@@ -65,6 +67,7 @@ function makePO(overrides: {
     taxAmount: 0,
     notes: null,
     terms: null,
+    organizationId: TEST_ORG_ID,
     createdAt: CREATED_AT,
     updatedAt: UPDATED_AT,
   };
@@ -82,6 +85,7 @@ function makeCustomer(overrides: { id: string; companyName: string }) {
     state: null,
     zip: null,
     country: "US",
+    organizationId: TEST_ORG_ID,
     createdAt: CREATED_AT,
     updatedAt: UPDATED_AT,
   };
@@ -99,7 +103,7 @@ describe("Report Service", () => {
       vi.mocked(prisma.customer.findMany).mockResolvedValue([]);
       vi.mocked(prisma.customer.count).mockResolvedValue(0);
 
-      const report = await generateReport();
+      const report = await generateReport(TEST_ORG_ID);
 
       expect(report.invoiceSummary.total).toBe(0);
       expect(report.invoiceSummary.totalAmount).toBe(0);
@@ -147,7 +151,7 @@ describe("Report Service", () => {
       vi.mocked(prisma.customer.findMany).mockResolvedValue([]);
       vi.mocked(prisma.customer.count).mockResolvedValue(2);
 
-      const report = await generateReport();
+      const report = await generateReport(TEST_ORG_ID);
 
       expect(report.invoiceSummary.total).toBe(3);
       expect(report.invoiceSummary.totalAmount).toBe(2250);
@@ -185,7 +189,7 @@ describe("Report Service", () => {
       vi.mocked(prisma.customer.findMany).mockResolvedValue([]);
       vi.mocked(prisma.customer.count).mockResolvedValue(1);
 
-      const report = await generateReport();
+      const report = await generateReport(TEST_ORG_ID);
 
       expect(report.poSummary.total).toBe(2);
       expect(report.poSummary.totalAmount).toBe(8000);
@@ -234,7 +238,7 @@ describe("Report Service", () => {
       vi.mocked(prisma.customer.findMany).mockResolvedValue(mockCustomers);
       vi.mocked(prisma.customer.count).mockResolvedValue(2);
 
-      const report = await generateReport();
+      const report = await generateReport(TEST_ORG_ID);
 
       expect(report.customerRevenue.length).toBe(2);
       expect(report.customerRevenue[0].name).toBe("Customer B"); // highest revenue
@@ -267,7 +271,7 @@ describe("Report Service", () => {
       vi.mocked(prisma.customer.findMany).mockResolvedValue(mockCustomers);
       vi.mocked(prisma.customer.count).mockResolvedValue(15);
 
-      const report = await generateReport();
+      const report = await generateReport(TEST_ORG_ID);
 
       expect(report.customerRevenue.length).toBe(10);
       expect(report.customerRevenue[0].totalRevenue).toBe(100 * 15); // highest
@@ -280,7 +284,7 @@ describe("Report Service", () => {
       vi.mocked(prisma.customer.findMany).mockResolvedValue([]);
       vi.mocked(prisma.customer.count).mockResolvedValue(0);
 
-      const report = await generateReport();
+      const report = await generateReport(TEST_ORG_ID);
 
       expect(report.monthlyData.length).toBe(12);
       report.monthlyData.forEach((m) => {
@@ -324,7 +328,7 @@ describe("Report Service", () => {
       vi.mocked(prisma.customer.findMany).mockResolvedValue([]);
       vi.mocked(prisma.customer.count).mockResolvedValue(0);
 
-      const report = await generateReport();
+      const report = await generateReport(TEST_ORG_ID);
 
       const currentMonthData = report.monthlyData[report.monthlyData.length - 1]; // last month
       expect(currentMonthData.invoiced).toBe(1000);
@@ -350,7 +354,7 @@ describe("Report Service", () => {
       vi.mocked(prisma.customer.findMany).mockResolvedValue([]);
       vi.mocked(prisma.customer.count).mockResolvedValue(1);
 
-      const report = await generateReport();
+      const report = await generateReport(TEST_ORG_ID);
 
       expect(report.recentInvoices.length).toBe(5);
       expect(report.recentInvoices[0].number).toBe("INV-001");
@@ -375,7 +379,7 @@ describe("Report Service", () => {
       vi.mocked(prisma.customer.findMany).mockResolvedValue([]);
       vi.mocked(prisma.customer.count).mockResolvedValue(1);
 
-      const report = await generateReport();
+      const report = await generateReport(TEST_ORG_ID);
 
       expect(report.recentPOs.length).toBe(5);
       expect(report.recentPOs[0].number).toBe("PO-001");
@@ -484,7 +488,7 @@ describe("Report Service", () => {
       vi.mocked(prisma.customer.findMany).mockResolvedValue([]);
       vi.mocked(prisma.customer.count).mockResolvedValue(2);
 
-      const report = await generateReport();
+      const report = await generateReport(TEST_ORG_ID);
 
       expect(report.invoiceSummary.byStatus.draft).toBe(1);
       expect(report.invoiceSummary.byStatus.sent).toBe(1);

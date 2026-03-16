@@ -45,7 +45,8 @@ export async function sendInvoiceEmail(
   invoiceNumber: string,
   customerName: string,
   total: number,
-  dueDate: Date
+  dueDate: Date,
+  organizationName: string
 ): Promise<boolean> {
   try {
     await initializeEmailTransport();
@@ -75,13 +76,13 @@ export async function sendInvoiceEmail(
       <p>Please reply to this email if you have any questions.</p>
       <p>Thank you!</p>
       <hr />
-      <p style="font-size: 12px; color: #666;">This is an automated email from BillFlow Billing System</p>
+      <p style="font-size: 12px; color: #666;">This is an automated email from ${organizationName} via BillFlow</p>
     `;
 
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"BillFlow" <noreply@billflow.local>',
+      from: process.env.SMTP_FROM || `"${organizationName}" <noreply@billflow.local>`,
       to: recipientEmail,
-      subject: `Invoice ${invoiceNumber} from Dual Aero`,
+      subject: `Invoice ${invoiceNumber} from ${organizationName}`,
       html: htmlContent,
     });
 
@@ -98,7 +99,8 @@ export async function sendOverdueNotice(
   invoiceNumber: string,
   customerName: string,
   daysOverdue: number,
-  amount: number
+  amount: number,
+  organizationName: string
 ): Promise<boolean> {
   try {
     await initializeEmailTransport();
@@ -120,11 +122,11 @@ export async function sendOverdueNotice(
       <p>If you have already sent payment, please disregard this notice.</p>
       <p>Thank you for your prompt attention to this matter.</p>
       <hr />
-      <p style="font-size: 12px; color: #666;">This is an automated email from BillFlow Billing System</p>
+      <p style="font-size: 12px; color: #666;">This is an automated email from ${organizationName} via BillFlow</p>
     `;
 
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"BillFlow" <noreply@billflow.local>',
+      from: process.env.SMTP_FROM || `"${organizationName}" <noreply@billflow.local>`,
       to: recipientEmail,
       subject: `Payment Reminder: Invoice ${invoiceNumber} is Overdue`,
       html: htmlContent,
@@ -144,7 +146,8 @@ export async function sendPaymentConfirmation(
   customerName: string,
   amountPaid: number,
   paymentDate: Date,
-  remainingBalance: number
+  remainingBalance: number,
+  organizationName: string
 ): Promise<boolean> {
   try {
     await initializeEmailTransport();
@@ -178,11 +181,11 @@ export async function sendPaymentConfirmation(
       <p>${remainingBalance === 0 ? "Your invoice has been paid in full. Thank you!" : "Please remit the remaining balance as shown above."}</p>
       <p>Thank you for your business!</p>
       <hr />
-      <p style="font-size: 12px; color: #666;">This is an automated email from BillFlow Billing System</p>
+      <p style="font-size: 12px; color: #666;">This is an automated email from ${organizationName} via BillFlow</p>
     `;
 
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"BillFlow" <noreply@billflow.local>',
+      from: process.env.SMTP_FROM || `"${organizationName}" <noreply@billflow.local>`,
       to: recipientEmail,
       subject: `Payment Confirmation for Invoice ${invoiceNumber}`,
       html: htmlContent,

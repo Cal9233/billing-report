@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +32,10 @@ export function LoginForm() {
         return;
       }
 
-      router.push(callbackUrl);
+      // Force full page load so middleware re-evaluates with the new session cookie.
+      // router.push() does a soft client-side navigation that may not pick up
+      // the freshly-set auth cookie, causing the user to stay on the login page.
+      window.location.href = callbackUrl;
     } catch {
       setError("An error occurred. Please try again.");
       setIsLoading(false);
@@ -48,7 +50,7 @@ export function LoginForm() {
           <span className="text-white font-bold text-xl">B</span>
         </div>
         <h1 className="text-2xl font-bold text-foreground">BillFlow</h1>
-        <p className="text-muted-foreground mt-1">Billing Management for Dual Aero</p>
+        <p className="text-muted-foreground mt-1">Billing Management</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -107,11 +109,10 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-        <p className="font-semibold mb-1">Demo Credentials</p>
-        <p>Email: demo@dualaero.com</p>
-        <p>Password: Demo123!</p>
-      </div>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Don&apos;t have an account?{" "}
+        <span className="font-medium text-foreground">Contact your administrator.</span>
+      </p>
     </div>
   );
 }

@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db/client";
 import { generatePOPDF } from "@/lib/pdf/generate-po-pdf";
+import { protectAPI } from "@/lib/middleware/api-protection";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { id } = await params;
-    const po = await prisma.purchaseOrder.findUnique({
-      where: { id },
+    const po = await prisma.purchaseOrder.findFirst({
+      where: { id, organizationId },
       include: { customer: true, lineItems: true },
     });
 
@@ -20,7 +25,12 @@ export async function GET(
       );
     }
 
-    const doc = generatePOPDF(po);
+    // Fetch org info for the PDF header
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+    });
+
+    const doc = generatePOPDF(po, org || undefined);
     const pdfBuffer = doc.output("arraybuffer");
 
     return new NextResponse(pdfBuffer, {

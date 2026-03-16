@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ArrowLeft, Download, Printer, Edit, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { PaymentSection } from "@/components/payments/payment-section";
 
 interface Invoice {
   id: string;
@@ -56,7 +57,7 @@ export default function InvoiceDetailPage() {
     if (!confirm("Are you sure you want to delete this invoice?")) return;
     try {
       await fetch(`/api/invoices/${params.id}`, { method: "DELETE" });
-      router.push("/invoices");
+      window.location.href = "/invoices";
     } catch (error) {
       console.error("Failed to delete:", error);
     }
@@ -264,6 +265,9 @@ export default function InvoiceDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Payment section — outside printable area, no-print applied inside component */}
+      <PaymentSection invoiceId={invoice.id} />
     </div>
   );
 }

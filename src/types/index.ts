@@ -83,3 +83,34 @@ export interface PaginatedResponse<T> {
     totalPages: number;
   };
 }
+
+// ---- Session types (multi-tenant) ----
+
+export interface SessionUser {
+  id: string;
+  email: string;
+  name?: string | null;
+  role: string;
+  organizationId: string;
+  organizationName: string;
+  organizationSlug: string;
+}
+
+// ---- Organization info for PDF / email ----
+
+export interface OrganizationInfo {
+  id: string;
+  name: string;
+  slug: string;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  country?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  logoUrl?: string | null;
+  currency: string;
+  locale: string;
+}

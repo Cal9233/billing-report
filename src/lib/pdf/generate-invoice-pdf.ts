@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import type { OrganizationInfo } from "@/types";
 
 interface InvoicePDFData {
   invoiceNumber: string;
@@ -29,7 +30,7 @@ interface InvoicePDFData {
   }[];
 }
 
-export function generateInvoicePDF(data: InvoicePDFData): jsPDF {
+export function generateInvoicePDF(data: InvoicePDFData, org?: OrganizationInfo): jsPDF {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -45,15 +46,26 @@ export function generateInvoicePDF(data: InvoicePDFData): jsPDF {
   doc.text(`Issue Date: ${formatDate(data.issueDate)}`, 20, 58);
   doc.text(`Due Date: ${formatDate(data.dueDate)}`, 20, 66);
 
-  // Company info (right side)
+  // Company info (right side) — use organization data if available
+  const companyName = org?.name || "Your Company Name";
+  const companyAddress = org?.address || "";
+  const companyCityStateZip = [org?.city, org?.state, org?.zip].filter(Boolean).join(", ") || "";
+  const companyContact = org?.email || org?.phone || "";
+
   doc.setFontSize(14);
   doc.setTextColor(0, 0, 0);
-  doc.text("Your Company Name", pageWidth - 20, 30, { align: "right" });
+  doc.text(companyName, pageWidth - 20, 30, { align: "right" });
   doc.setFontSize(11);
   doc.setTextColor(100, 100, 100);
-  doc.text("123 Business Street", pageWidth - 20, 39, { align: "right" });
-  doc.text("City, State 12345", pageWidth - 20, 47, { align: "right" });
-  doc.text("contact@company.com", pageWidth - 20, 55, { align: "right" });
+  if (companyAddress) {
+    doc.text(companyAddress, pageWidth - 20, 39, { align: "right" });
+  }
+  if (companyCityStateZip) {
+    doc.text(companyCityStateZip, pageWidth - 20, 47, { align: "right" });
+  }
+  if (companyContact) {
+    doc.text(companyContact, pageWidth - 20, 55, { align: "right" });
+  }
 
   // Divider
   doc.setDrawColor(200, 200, 200);

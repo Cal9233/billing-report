@@ -10,7 +10,7 @@ export interface SearchResult {
   status?: string;
 }
 
-export async function globalSearch(query: string): Promise<SearchResult[]> {
+export async function globalSearch(query: string, organizationId: string): Promise<SearchResult[]> {
   if (!query || query.trim().length === 0) {
     return [];
   }
@@ -21,6 +21,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
   // Search invoices by number or customer name
   const invoices = await prisma.invoice.findMany({
     where: {
+      organizationId,
       OR: [
         { invoiceNumber: { contains: searchTerm } },
         { customer: { companyName: { contains: searchTerm } } },
@@ -51,6 +52,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
   // Search purchase orders by number or customer name
   const purchaseOrders = await prisma.purchaseOrder.findMany({
     where: {
+      organizationId,
       OR: [
         { poNumber: { contains: searchTerm } },
         { customer: { companyName: { contains: searchTerm } } },
@@ -81,6 +83,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
   // Search customers
   const customers = await prisma.customer.findMany({
     where: {
+      organizationId,
       OR: [
         { companyName: { contains: searchTerm } },
         { email: { contains: searchTerm } },
@@ -110,6 +113,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
 
 export async function searchInvoices(
   query: string,
+  organizationId: string,
   filters?: {
     status?: string;
     customerId?: string;
@@ -121,6 +125,7 @@ export async function searchInvoices(
 
   return prisma.invoice.findMany({
     where: {
+      organizationId,
       AND: [
         {
           OR: [
@@ -144,6 +149,7 @@ export async function searchInvoices(
 
 export async function searchPurchaseOrders(
   query: string,
+  organizationId: string,
   filters?: {
     status?: string;
     customerId?: string;
@@ -155,6 +161,7 @@ export async function searchPurchaseOrders(
 
   return prisma.purchaseOrder.findMany({
     where: {
+      organizationId,
       AND: [
         {
           OR: [

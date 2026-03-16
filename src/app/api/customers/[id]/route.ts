@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/db/client";
 import { customerUpdateSchema, ZodError } from "@/types";
+import { getCustomerById, updateCustomer, deleteCustomer } from "@/lib/services/customer.service";
+import { protectAPI } from "@/lib/middleware/api-protection";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { id } = await params;
-    const customer = await prisma.customer.findUnique({
-      where: { id },
-      include: {
-        _count: { select: { invoices: true, purchaseOrders: true } },
-      },
-    });
+    const customer = await getCustomerById(id, organizationId);
 
     if (!customer) {
       return NextResponse.json(
@@ -36,6 +36,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -52,14 +56,7 @@ export async function PUT(
       );
     }
 
-    const customer = await prisma.customer.update({
-      where: { id },
-      data: validated,
-      include: {
-        _count: { select: { invoices: true, purchaseOrders: true } },
-      },
-    });
-
+    const customer = await updateCustomer(id, organizationId, validated);
     return NextResponse.json(customer);
   } catch (error) {
     if (error instanceof SyntaxError) {
@@ -72,6 +69,12 @@ export async function PUT(
       return NextResponse.json(
         { error: "Validation failed", details: error },
         { status: 400 }
+      );
+    }
+    if (error instanceof Error && error.message === "Customer not found") {
+      return NextResponse.json(
+        { error: "Customer not found" },
+        { status: 404 }
       );
     }
     // Prisma P2025 = Record not found
@@ -94,48 +97,30 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const result = await protectAPI(request, { roles: ["admin"] });
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { id } = await params;
-
-    // Check if customer exists first
-    const customer = await prisma.customer.findUnique({
-      where: { id },
-      include: {
-        _count: { select: { invoices: true, purchaseOrders: true } },
-      },
-    });
-
-    if (!customer) {
+    await deleteCustomer(id, organizationId);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (error instanceof Error && error.message === "Customer not found") {
       return NextResponse.json(
         { error: "Customer not found" },
         { status: 404 }
       );
     }
-
-    // Check for existing invoices/POs (onDelete: Restrict will block this)
-    const relatedCount = customer._count.invoices + customer._count.purchaseOrders;
-    if (relatedCount > 0) {
+    if (error instanceof Error && error.message.includes("Cannot delete customer")) {
       return NextResponse.json(
-        {
-          error: "Cannot delete customer with existing invoices or purchase orders",
-          details: [
-            {
-              invoices: customer._count.invoices,
-              purchaseOrders: customer._count.purchaseOrders,
-              message: `This customer has ${customer._count.invoices} invoice(s) and ${customer._count.purchaseOrders} purchase order(s). Delete or reassign them first.`,
-            },
-          ],
-        },
+        { error: error.message },
         { status: 409 }
       );
     }
-
-    await prisma.customer.delete({ where: { id } });
-    return NextResponse.json({ success: true });
-  } catch (error) {
     console.error("Failed to delete customer:", error);
     return NextResponse.json(
       { error: "Failed to delete customer" },

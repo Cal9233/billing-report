@@ -1,9 +1,49 @@
 import { PrismaClient } from "@prisma/client";
+import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create sample customers
+  // Read org config from env vars or use defaults
+  const orgName = process.env.SEED_ORG_NAME || "Demo Organization";
+  const orgSlug = process.env.SEED_ORG_SLUG || "demo-org";
+  const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@billflow.local";
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD || "Demo123!";
+
+  // Create default organization
+  const org = await prisma.organization.upsert({
+    where: { slug: orgSlug },
+    update: {},
+    create: {
+      name: orgName,
+      slug: orgSlug,
+      address: "123 Business Street",
+      city: "Springfield",
+      state: "IL",
+      zip: "62701",
+      country: "US",
+      phone: "555-0000",
+      email: `billing@${orgSlug}.com`,
+      currency: "USD",
+      locale: "en-US",
+    },
+  });
+
+  // Create admin user assigned to org
+  const hashedPassword = await hash(adminPassword, 12);
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {},
+    create: {
+      email: adminEmail,
+      password: hashedPassword,
+      name: "Admin User",
+      role: "admin",
+      organizationId: org.id,
+    },
+  });
+
+  // Create sample customers — all scoped to the org
   const customer1 = await prisma.customer.create({
     data: {
       companyName: "Acme Corporation",
@@ -13,6 +53,7 @@ async function main() {
       city: "Springfield",
       state: "IL",
       zip: "62701",
+      organizationId: org.id,
     },
   });
 
@@ -25,6 +66,7 @@ async function main() {
       city: "Austin",
       state: "TX",
       zip: "73301",
+      organizationId: org.id,
     },
   });
 
@@ -37,10 +79,11 @@ async function main() {
       city: "Chicago",
       state: "IL",
       zip: "60601",
+      organizationId: org.id,
     },
   });
 
-  // Create sample invoices
+  // Create sample invoices — all scoped to the org
   await prisma.invoice.create({
     data: {
       invoiceNumber: "INV-202603-0001",
@@ -54,6 +97,7 @@ async function main() {
       notes: "Thank you for your prompt payment.",
       terms: "Net 30",
       customerId: customer1.id,
+      organizationId: org.id,
       lineItems: {
         create: [
           { description: "Web Development Services", quantity: 40, unitPrice: 100, total: 4000 },
@@ -75,6 +119,7 @@ async function main() {
       total: 13562.5,
       terms: "Net 30",
       customerId: customer2.id,
+      organizationId: org.id,
       lineItems: {
         create: [
           { description: "Cloud Infrastructure Setup", quantity: 1, unitPrice: 7500, total: 7500 },
@@ -97,6 +142,7 @@ async function main() {
       total: 3200,
       terms: "Net 30",
       customerId: customer3.id,
+      organizationId: org.id,
       lineItems: {
         create: [
           { description: "Data Analysis Report", quantity: 1, unitPrice: 2000, total: 2000 },
@@ -117,6 +163,7 @@ async function main() {
       taxAmount: 743.75,
       total: 9493.75,
       customerId: customer1.id,
+      organizationId: org.id,
       lineItems: {
         create: [
           { description: "API Development", quantity: 50, unitPrice: 125, total: 6250 },
@@ -126,7 +173,7 @@ async function main() {
     },
   });
 
-  // Create sample purchase orders
+  // Create sample purchase orders — all scoped to the org
   await prisma.purchaseOrder.create({
     data: {
       poNumber: "PO-202603-0001",
@@ -139,6 +186,7 @@ async function main() {
       total: 2604,
       terms: "Net 15",
       customerId: customer2.id,
+      organizationId: org.id,
       lineItems: {
         create: [
           { description: "Server Hardware - Dell R750", quantity: 2, unitPrice: 1200, total: 2400 },
@@ -158,6 +206,7 @@ async function main() {
       taxAmount: 0,
       total: 6800,
       customerId: customer3.id,
+      organizationId: org.id,
       lineItems: {
         create: [
           { description: "Software Licenses - Annual", quantity: 20, unitPrice: 240, total: 4800 },
@@ -178,6 +227,7 @@ async function main() {
       taxAmount: 80.75,
       total: 1030.75,
       customerId: customer1.id,
+      organizationId: org.id,
       lineItems: {
         create: [
           { description: "Office Supplies Bulk Order", quantity: 1, unitPrice: 450, total: 450 },
@@ -188,6 +238,8 @@ async function main() {
   });
 
   console.log("Seed data created successfully!");
+  console.log(`Organization: ${orgName} (${orgSlug})`);
+  console.log(`Admin: ${adminEmail}`);
 }
 
 main()

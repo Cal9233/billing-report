@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { invoiceUpdateSchema, ZodError } from "@/types";
 import { getInvoiceById, updateInvoice, deleteInvoice } from "@/lib/services/invoice.service";
+import { protectAPI } from "@/lib/middleware/api-protection";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { id } = await params;
-    const invoice = await getInvoiceById(id);
+    const invoice = await getInvoiceById(id, organizationId);
 
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
@@ -28,12 +33,16 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { id } = await params;
     const body = await request.json();
     const validated = invoiceUpdateSchema.parse(body);
 
-    const invoice = await updateInvoice(id, validated);
+    const invoice = await updateInvoice(id, organizationId, validated);
     return NextResponse.json(invoice);
   } catch (error) {
     if (error instanceof SyntaxError) {
@@ -47,6 +56,9 @@ export async function PUT(
         { error: "Validation failed", details: error },
         { status: 400 }
       );
+    }
+    if (error instanceof Error && error.message === "Invoice not found") {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     // Prisma P2025 = Record not found
     if (
@@ -85,14 +97,21 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const result = await protectAPI(request, { roles: ["admin"] });
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
+
   try {
     const { id } = await params;
-    await deleteInvoice(id);
+    await deleteInvoice(id, organizationId);
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof Error && error.message === "Invoice not found") {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
     // Prisma P2025 = Record not found
     if (
       error instanceof Error &&

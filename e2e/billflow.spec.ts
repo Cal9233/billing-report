@@ -2,7 +2,7 @@ import { test, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const BASE = 'http://192.168.56.1:3099';
+const BASE = 'http://192.168.56.1:3000';
 
 // ─── Screenshot helper ────────────────────────────────────────────────────────
 
@@ -21,9 +21,43 @@ async function waitForData(page: Page, loadingText: string, timeout = 10000) {
   }
 }
 
+// ─── Login helper ─────────────────────────────────────────────────────────────
+
+async function login(page: Page) {
+  await page.goto('about:blank').catch(() => {});
+  await page.waitForTimeout(300);
+  await page.goto(`${BASE}/auth/login`, { waitUntil: 'load', timeout: 30000 });
+
+  // If already authenticated the middleware will redirect away from login
+  if (!page.url().includes('/auth/login')) {
+    return;
+  }
+
+  await page.waitForSelector('#email', { state: 'visible', timeout: 10000 });
+  await page.locator('#email').fill('admin@billflow.local');
+  await page.locator('#password').fill('Demo123!');
+  await page.getByRole('button', { name: /Sign In/i }).click();
+
+  try {
+    await page.waitForURL(/\/dashboard/, { timeout: 25000 });
+  } catch {
+    console.log('INFO: Login redirect failed, retrying...');
+    await page.goto(`${BASE}/auth/login`, { waitUntil: 'load' });
+    await page.waitForSelector('#email', { state: 'visible', timeout: 10000 });
+    await page.locator('#email').fill('admin@billflow.local');
+    await page.locator('#password').fill('Demo123!');
+    await page.getByRole('button', { name: /Sign In/i }).click();
+    await page.waitForURL(/\/dashboard/, { timeout: 25000 });
+  }
+}
+
 // ─── Navigation & Layout ─────────────────────────────────────────────────────
 
 test.describe('Navigation & Layout', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+
   test('homepage redirects to /dashboard', async ({ page }) => {
     await page.goto(BASE);
     await page.waitForURL(`${BASE}/dashboard`, { timeout: 15000 });
@@ -107,6 +141,7 @@ test.describe('Navigation & Layout', () => {
 
 test.describe('Dashboard', () => {
   test.beforeEach(async ({ page }) => {
+    await login(page);
     await page.goto(`${BASE}/dashboard`);
     await waitForData(page, 'Loading dashboard...');
   });
@@ -153,10 +188,16 @@ test.describe('Invoices - Full CRUD', () => {
   test.beforeAll(async ({ browser }) => {
     const ctx = await browser.newContext();
     const pg = await ctx.newPage();
+    // Must authenticate before calling protected API endpoints
+    await login(pg);
     const r = await pg.request.get(`${BASE}/api/invoices`);
     const d = await r.json();
     if (d.data?.length) existingInvoiceId = d.data[0].id;
     await ctx.close();
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await login(page);
   });
 
   test('invoice list page loads with data', async ({ page }) => {
@@ -333,10 +374,16 @@ test.describe('Purchase Orders - Full CRUD', () => {
   test.beforeAll(async ({ browser }) => {
     const ctx = await browser.newContext();
     const pg = await ctx.newPage();
+    // Must authenticate before calling protected API endpoints
+    await login(pg);
     const r = await pg.request.get(`${BASE}/api/purchase-orders`);
     const d = await r.json();
     if (d.data?.length) existingPoId = d.data[0].id;
     await ctx.close();
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await login(page);
   });
 
   test('PO list page loads', async ({ page }) => {
@@ -495,6 +542,10 @@ test.describe('Purchase Orders - Full CRUD', () => {
 // ─── Customers ────────────────────────────────────────────────────────────────
 
 test.describe('Customers', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+
   test('customer list renders', async ({ page }) => {
     await page.goto(`${BASE}/customers`);
     await waitForData(page, 'Loading...');
@@ -545,6 +596,10 @@ test.describe('Customers', () => {
 // ─── Accessibility Checks ─────────────────────────────────────────────────────
 
 test.describe('Accessibility', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+
   test('skip-nav link is present and has sr-only class', async ({ page }) => {
     await page.goto(`${BASE}/dashboard`);
     const skipLink = page.locator('a[href="#main-content"]');
@@ -661,6 +716,10 @@ test.describe('Accessibility', () => {
 // ─── Responsive Design ────────────────────────────────────────────────────────
 
 test.describe('Responsive Design', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+
   test('mobile 375x667 - dashboard renders and content is visible', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto(`${BASE}/dashboard`);
@@ -711,6 +770,10 @@ test.describe('Responsive Design', () => {
 // ─── Error States ─────────────────────────────────────────────────────────────
 
 test.describe('Error States', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+
   test('/invoices/nonexistent-id - shows not found message', async ({ page }) => {
     await page.goto(`${BASE}/invoices/nonexistent-xyz-404-test`);
     await page.waitForLoadState('networkidle');

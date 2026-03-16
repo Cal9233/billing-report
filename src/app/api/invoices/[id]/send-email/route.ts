@@ -7,16 +7,15 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const error = await protectAPI(request);
-  if (error) {
-    return error;
-  }
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId, organizationName } = result.session.user;
 
   try {
     const { id } = await params;
 
-    const invoice = await prisma.invoice.findUnique({
-      where: { id },
+    const invoice = await prisma.invoice.findFirst({
+      where: { id, organizationId },
       include: { customer: true },
     });
 
@@ -39,7 +38,8 @@ export async function POST(
       invoice.invoiceNumber,
       invoice.customer.companyName,
       invoice.total,
-      invoice.dueDate
+      invoice.dueDate,
+      organizationName
     );
 
     if (!sent) {

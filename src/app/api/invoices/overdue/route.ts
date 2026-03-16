@@ -6,13 +6,12 @@ import {
 import { protectAPI } from "@/lib/middleware/api-protection";
 
 export async function GET(request: NextRequest) {
-  const error = await protectAPI(request);
-  if (error) {
-    return error;
-  }
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
 
   try {
-    const summary = await getOverdueSummary();
+    const summary = await getOverdueSummary(organizationId);
     return NextResponse.json(summary);
   } catch (err) {
     console.error("Get overdue summary error:", err);
@@ -24,13 +23,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const error = await protectAPI(request);
-  if (error) {
-    return error;
-  }
+  const result = await protectAPI(request);
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
 
   try {
-    const updated = await updateOverdueStatuses();
+    const updated = await updateOverdueStatuses(organizationId);
     return NextResponse.json({
       message: `Updated ${updated} invoice statuses to overdue`,
       updatedCount: updated,

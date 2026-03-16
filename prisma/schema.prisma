@@ -2,17 +2,59 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// DATABASE PROVIDER SWITCHING
+// ---------------------------
+// Local development: provider = "sqlite", DATABASE_URL = "file:./dev.db"
+// Production (MySQL): provider = "mysql", DATABASE_URL = "mysql://user:pass@host:3306/billflow"
+//
+// To switch to MySQL for production:
+//   1. Change provider below to "mysql"
+//   2. Update DATABASE_URL in .env to your MySQL connection string
+//   3. Run: npx prisma generate && npx prisma db push
+//
+// NOTE: SQLite does not support @db.Text or @db.VarChar annotations.
+// When switching to MySQL, you may add column-type annotations for optimization.
+
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  address   String?
+  city      String?
+  state     String?
+  zip       String?
+  country   String?
+  phone     String?
+  email     String?
+  website   String?
+  logoUrl   String?
+  currency  String   @default("USD")
+  locale    String   @default("en-US")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users          User[]
+  customers      Customer[]
+  invoices       Invoice[]
+  purchaseOrders PurchaseOrder[]
+  invites        Invite[]
+
+  @@index([slug])
+}
+
 model User {
-  id       String  @id @default(cuid())
-  email    String  @unique
-  password String  @db.VarChar(255) // bcrypt hashed
-  name     String? @db.VarChar(200)
-  role     String  @default("user") @db.VarChar(20) // user, admin
+  id             String       @id @default(cuid())
+  email          String       @unique
+  password       String
+  name           String?
+  role           String       @default("user")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   sessions Session[]
 
@@ -20,13 +62,14 @@ model User {
   updatedAt DateTime @updatedAt
 
   @@index([email])
+  @@index([organizationId])
 }
 
 model Session {
   id           String   @id @default(cuid())
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionToken String   @unique @db.VarChar(500)
+  sessionToken String   @unique
   expires      DateTime
 
   createdAt DateTime @default(now())
@@ -36,80 +79,104 @@ model Session {
   @@index([sessionToken])
 }
 
+model Invite {
+  id             String       @id @default(cuid())
+  email          String?
+  token          String       @unique
+  role           String       @default("user")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([token])
+  @@index([organizationId])
+}
+
 model Customer {
-  id          String   @id @default(cuid())
-  companyName String   @db.VarChar(200)
-  contactName String?  @db.VarChar(200)
-  email       String?  @db.VarChar(254)
-  phone       String?  @db.VarChar(30)
-  address     String?  @db.VarChar(500)
-  city        String?  @db.VarChar(100)
-  state       String?  @db.VarChar(100)
-  zip         String?  @db.VarChar(20)
-  country     String   @default("US") @db.VarChar(100)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String       @id @default(cuid())
+  companyName    String
+  contactName    String?
+  email          String?
+  phone          String?
+  address        String?
+  city           String?
+  state          String?
+  zip            String?
+  country        String       @default("US")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   invoices       Invoice[]
   purchaseOrders PurchaseOrder[]
 
   @@index([companyName])
   @@index([email])
+  @@index([organizationId])
 }
 
 model Invoice {
-  id            String        @id @default(cuid())
-  invoiceNumber String        @unique @db.VarChar(50)
-  status        String        @default("draft") @db.VarChar(20) // draft, sent, paid, overdue, cancelled
-  issueDate     DateTime      @default(now())
-  dueDate       DateTime
-  subtotal      Float         @default(0)
-  taxRate       Float         @default(0)
-  taxAmount     Float         @default(0)
-  total         Float         @default(0)
-  notes         String?       @db.Text
-  terms         String?       @db.Text
-  customerId    String
-  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  lineItems     LineItem[]
-  payments      Payment[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id             String       @id @default(cuid())
+  invoiceNumber  String       @unique
+  status         String       @default("draft")
+  issueDate      DateTime     @default(now())
+  dueDate        DateTime
+  subtotal       Float        @default(0)
+  taxRate        Float        @default(0)
+  taxAmount      Float        @default(0)
+  total          Float        @default(0)
+  notes          String?
+  terms          String?
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lineItems      LineItem[]
+  payments       Payment[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@index([status])
   @@index([customerId])
   @@index([dueDate])
   @@index([createdAt])
   @@index([invoiceNumber])
+  @@index([organizationId])
 }
 
 model PurchaseOrder {
-  id            String         @id @default(cuid())
-  poNumber      String         @unique @db.VarChar(50)
-  status        String         @default("draft") @db.VarChar(20) // draft, submitted, approved, received, cancelled
-  issueDate     DateTime       @default(now())
-  dueDate       DateTime?
-  subtotal      Float          @default(0)
-  taxRate       Float          @default(0)
-  taxAmount     Float          @default(0)
-  total         Float          @default(0)
-  notes         String?        @db.Text
-  terms         String?        @db.Text
-  customerId    String
-  customer      Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  lineItems     POLineItem[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id             String         @id @default(cuid())
+  poNumber       String         @unique
+  status         String         @default("draft")
+  issueDate      DateTime       @default(now())
+  dueDate        DateTime?
+  subtotal       Float          @default(0)
+  taxRate        Float          @default(0)
+  taxAmount      Float          @default(0)
+  total          Float          @default(0)
+  notes          String?
+  terms          String?
+  customerId     String
+  customer       Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lineItems      POLineItem[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   @@index([status])
   @@index([customerId])
   @@index([createdAt])
   @@index([poNumber])
+  @@index([organizationId])
 }
 
 model LineItem {
   id          String   @id @default(cuid())
-  description String   @db.VarChar(500)
+  description String
   quantity    Float
   unitPrice   Float
   total       Float
@@ -122,7 +189,7 @@ model LineItem {
 
 model POLineItem {
   id              String        @id @default(cuid())
-  description     String        @db.VarChar(500)
+  description     String
   quantity        Float
   unitPrice       Float
   total           Float
@@ -138,9 +205,9 @@ model Payment {
   invoiceId String
   invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   amount    Float
-  method    String   @db.VarChar(30) // cash, check, credit_card, bank_transfer, other
+  method    String
   date      DateTime
-  notes     String?  @db.Text
+  notes     String?
 
   createdAt DateTime @default(now())
 

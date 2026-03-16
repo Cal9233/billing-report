@@ -3,13 +3,12 @@ import { createFullBackup, restoreFromBackup } from "@/lib/services/backup.servi
 import { protectAPI } from "@/lib/middleware/api-protection";
 
 export async function GET(request: NextRequest) {
-  const error = await protectAPI(request);
-  if (error) {
-    return error;
-  }
+  const result = await protectAPI(request, { roles: ["admin"] });
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
 
   try {
-    const backup = await createFullBackup();
+    const backup = await createFullBackup(organizationId);
     const filename = `billflow_backup_${new Date().toISOString().split("T")[0]}.json`;
 
     return new NextResponse(backup, {
@@ -28,20 +27,19 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const error = await protectAPI(request);
-  if (error) {
-    return error;
-  }
+  const result = await protectAPI(request, { roles: ["admin"] });
+  if (result.error) return result.error;
+  const { organizationId } = result.session.user;
 
   try {
     const body = await request.text();
-    const result = await restoreFromBackup(body);
+    const restoreResult = await restoreFromBackup(body, organizationId);
 
-    if (!result.success) {
-      return NextResponse.json(result, { status: 400 });
+    if (!restoreResult.success) {
+      return NextResponse.json(restoreResult, { status: 400 });
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json(restoreResult);
   } catch (error) {
     console.error("Restore error:", error);
     return NextResponse.json(

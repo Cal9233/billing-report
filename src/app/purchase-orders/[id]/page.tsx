@@ -56,7 +56,7 @@ export default function PODetailPage() {
     if (!confirm("Delete this purchase order?")) return;
     try {
       await fetch(`/api/purchase-orders/${params.id}`, { method: "DELETE" });
-      router.push("/purchase-orders");
+      window.location.href = "/purchase-orders";
     } catch (error) {
       console.error("Failed to delete purchase order:", error);
       alert("Failed to delete purchase order. Please try again.");
