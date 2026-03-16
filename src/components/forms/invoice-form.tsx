@@ -151,6 +151,7 @@ export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
               <label htmlFor="invoice-customer" className="block text-sm font-medium mb-1">Customer</label>
               <select
                 id="invoice-customer"
+                name="customerId"
                 value={formData.customerId}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, customerId: e.target.value }))
@@ -170,6 +171,7 @@ export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
               <label htmlFor="invoice-status" className="block text-sm font-medium mb-1">Status</label>
               <select
                 id="invoice-status"
+                name="status"
                 value={formData.status}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, status: e.target.value }))
@@ -187,6 +189,7 @@ export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
               <label htmlFor="invoice-issue-date" className="block text-sm font-medium mb-1">Issue Date</label>
               <Input
                 id="invoice-issue-date"
+                name="issueDate"
                 type="date"
                 value={formData.issueDate}
                 onChange={(e) =>
@@ -199,6 +202,7 @@ export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
               <label htmlFor="invoice-due-date" className="block text-sm font-medium mb-1">Due Date</label>
               <Input
                 id="invoice-due-date"
+                name="dueDate"
                 type="date"
                 value={formData.dueDate}
                 onChange={(e) =>
@@ -211,6 +215,7 @@ export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
               <label htmlFor="invoice-tax-rate" className="block text-sm font-medium mb-1">Tax Rate (%)</label>
               <Input
                 id="invoice-tax-rate"
+                name="taxRate"
                 type="number"
                 step="0.01"
                 min="0"
@@ -342,6 +347,7 @@ export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
             <label htmlFor="invoice-notes" className="block text-sm font-medium mb-1">Notes</label>
             <textarea
               id="invoice-notes"
+              name="notes"
               value={formData.notes}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, notes: e.target.value }))
@@ -357,6 +363,7 @@ export function InvoiceForm({ initialData, mode }: InvoiceFormProps) {
             </label>
             <textarea
               id="invoice-terms"
+              name="terms"
               value={formData.terms}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, terms: e.target.value }))

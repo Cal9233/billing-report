@@ -5,7 +5,8 @@ import { LogOut } from "lucide-react";
 
 export function LogoutButton() {
   const handleLogout = async () => {
-    await signOut({ redirect: true });
+    await signOut({ redirect: false });
+    window.location.href = "/auth/login";
   };
 
   return (

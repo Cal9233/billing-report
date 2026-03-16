@@ -5,7 +5,10 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
-// In-memory store for rate limits (in production, use Redis)
+// LIMITATION: In-memory store — rate limits are per-process and reset on restart.
+// In a multi-instance deployment, each instance tracks its own counters independently,
+// so effective limits are multiplied by the number of instances.
+// For production multi-instance deployments, replace with Redis or a shared store.
 const rateLimits = new Map<string, RateLimitEntry>();
 
 export interface RateLimitConfig {

@@ -72,6 +72,7 @@ export function LoginForm() {
           </label>
           <input
             id="email"
+            name="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -90,6 +91,7 @@ export function LoginForm() {
           </label>
           <input
             id="password"
+            name="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -97,6 +99,14 @@ export function LoginForm() {
             required
             className="w-full h-12 px-4 rounded-lg border-2 border-border bg-white text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
           />
+          <div className="mt-1.5 text-right">
+            <a
+              href="/auth/forgot-password"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Forgot password?
+            </a>
+          </div>
         </div>
 
         <Button
@@ -111,7 +121,12 @@ export function LoginForm() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <span className="font-medium text-foreground">Contact your administrator.</span>
+        <a
+          href="/auth/request-access"
+          className="font-medium text-primary hover:underline"
+        >
+          Contact your administrator.
+        </a>
       </p>
     </div>
   );

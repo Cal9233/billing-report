@@ -204,6 +204,7 @@ export default function CustomersPage() {
                 </label>
                 <Input
                   id="cust-name"
+                  name="companyName"
                   value={formData.companyName}
                   onChange={(e) =>
                     setFormData((p) => ({ ...p, companyName: e.target.value }))
@@ -221,6 +222,7 @@ export default function CustomersPage() {
                 </label>
                 <Input
                   id="cust-contact"
+                  name="contactName"
                   value={formData.contactName}
                   onChange={(e) =>
                     setFormData((p) => ({ ...p, contactName: e.target.value }))
@@ -237,6 +239,7 @@ export default function CustomersPage() {
                 </label>
                 <Input
                   id="cust-email"
+                  name="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) =>
@@ -254,6 +257,7 @@ export default function CustomersPage() {
                 </label>
                 <Input
                   id="cust-phone"
+                  name="phone"
                   value={formData.phone}
                   onChange={(e) =>
                     setFormData((p) => ({ ...p, phone: e.target.value }))
@@ -270,6 +274,7 @@ export default function CustomersPage() {
                 </label>
                 <Input
                   id="cust-address"
+                  name="address"
                   value={formData.address}
                   onChange={(e) =>
                     setFormData((p) => ({ ...p, address: e.target.value }))
@@ -287,6 +292,7 @@ export default function CustomersPage() {
                   </label>
                   <Input
                     id="cust-city"
+                    name="city"
                     value={formData.city}
                     onChange={(e) =>
                       setFormData((p) => ({ ...p, city: e.target.value }))
@@ -303,6 +309,7 @@ export default function CustomersPage() {
                   </label>
                   <Input
                     id="cust-state"
+                    name="state"
                     value={formData.state}
                     onChange={(e) =>
                       setFormData((p) => ({ ...p, state: e.target.value }))
@@ -320,6 +327,7 @@ export default function CustomersPage() {
                   </label>
                   <Input
                     id="cust-zip"
+                    name="zip"
                     value={formData.zip}
                     onChange={(e) =>
                       setFormData((p) => ({ ...p, zip: e.target.value }))
@@ -338,6 +346,7 @@ export default function CustomersPage() {
                 </label>
                 <Input
                   id="cust-country"
+                  name="country"
                   value={formData.country}
                   onChange={(e) =>
                     setFormData((p) => ({ ...p, country: e.target.value }))

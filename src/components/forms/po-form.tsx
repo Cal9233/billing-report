@@ -140,6 +140,7 @@ export function POForm({ initialData, mode }: POFormProps) {
               <label htmlFor="po-vendor" className="block text-sm font-medium mb-1">Vendor</label>
               <select
                 id="po-vendor"
+                name="customerId"
                 value={formData.customerId}
                 onChange={(e) => setFormData((prev) => ({ ...prev, customerId: e.target.value }))}
                 className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -155,6 +156,7 @@ export function POForm({ initialData, mode }: POFormProps) {
               <label htmlFor="po-status" className="block text-sm font-medium mb-1">Status</label>
               <select
                 id="po-status"
+                name="status"
                 value={formData.status}
                 onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
                 className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -168,17 +170,17 @@ export function POForm({ initialData, mode }: POFormProps) {
             </div>
             <div>
               <label htmlFor="po-issue-date" className="block text-sm font-medium mb-1">Issue Date</label>
-              <Input id="po-issue-date" type="date" value={formData.issueDate}
+              <Input id="po-issue-date" name="issueDate" type="date" value={formData.issueDate}
                 onChange={(e) => setFormData((prev) => ({ ...prev, issueDate: e.target.value }))} required />
             </div>
             <div>
               <label htmlFor="po-due-date" className="block text-sm font-medium mb-1">Due Date</label>
-              <Input id="po-due-date" type="date" value={formData.dueDate}
+              <Input id="po-due-date" name="dueDate" type="date" value={formData.dueDate}
                 onChange={(e) => setFormData((prev) => ({ ...prev, dueDate: e.target.value }))} />
             </div>
             <div>
               <label htmlFor="po-tax-rate" className="block text-sm font-medium mb-1">Tax Rate (%)</label>
-              <Input id="po-tax-rate" type="number" step="0.01" min="0" max="100" value={formData.taxRate}
+              <Input id="po-tax-rate" name="taxRate" type="number" step="0.01" min="0" max="100" value={formData.taxRate}
                 onChange={(e) => setFormData((prev) => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))} />
             </div>
           </div>
@@ -266,14 +268,14 @@ export function POForm({ initialData, mode }: POFormProps) {
         <CardContent className="space-y-4">
           <div>
             <label htmlFor="po-notes" className="block text-sm font-medium mb-1">Notes</label>
-            <textarea id="po-notes" value={formData.notes}
+            <textarea id="po-notes" name="notes" value={formData.notes}
               onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
               rows={3} className="flex w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               placeholder="Additional notes..." />
           </div>
           <div>
             <label htmlFor="po-terms" className="block text-sm font-medium mb-1">Terms & Conditions</label>
-            <textarea id="po-terms" value={formData.terms}
+            <textarea id="po-terms" name="terms" value={formData.terms}
               onChange={(e) => setFormData((prev) => ({ ...prev, terms: e.target.value }))}
               rows={3} className="flex w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               placeholder="Payment terms..." />

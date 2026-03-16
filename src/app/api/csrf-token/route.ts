@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateCSRFToken, storeCSRFToken } from "@/lib/middleware/csrf";
+import { generateCSRFToken } from "@/lib/middleware/csrf";
 import { auth } from "@/lib/auth/config";
 
 export async function GET(request: NextRequest) {
@@ -13,13 +13,14 @@ export async function GET(request: NextRequest) {
   }
 
   const token = generateCSRFToken();
-  storeCSRFToken(token);
 
+  // Cookie is NOT HttpOnly — double-submit pattern requires JS to read it
+  // and send it back as the x-csrf-token header.
   return NextResponse.json(
     { token },
     {
       headers: {
-        "Set-Cookie": `csrf-token=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=86400`,
+        "Set-Cookie": `csrf-token=${token}; Path=/; Secure; SameSite=Strict; Max-Age=86400`,
       },
     }
   );

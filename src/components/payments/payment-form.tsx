@@ -102,6 +102,7 @@ export function PaymentForm({
             </span>
             <input
               id="payment-amount"
+              name="amount"
               type="number"
               step="0.01"
               min="0.01"
@@ -130,6 +131,7 @@ export function PaymentForm({
           </label>
           <input
             id="payment-date"
+            name="date"
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
@@ -149,6 +151,7 @@ export function PaymentForm({
         </label>
         <select
           id="payment-method"
+          name="method"
           value={method}
           onChange={(e) => setMethod(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
@@ -172,6 +175,7 @@ export function PaymentForm({
         </label>
         <textarea
           id="payment-notes"
+          name="notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}

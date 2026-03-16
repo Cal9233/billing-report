@@ -4,11 +4,9 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { ReactNode } from "react";
 
-const AUTH_ROUTES = ["/auth/login", "/auth/register"];
-
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isAuthPage = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+  const isAuthPage = pathname.startsWith("/auth");
 
   if (isAuthPage) {
     return <>{children}</>;

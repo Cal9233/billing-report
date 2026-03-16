@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
+import { createHash } from "crypto";
 import prisma from "@/lib/db/client";
 import { z } from "zod";
 import { protectAPI } from "@/lib/middleware/api-protection";
@@ -30,9 +31,10 @@ export async function POST(request: NextRequest) {
     let role = "user";
 
     if (parsed.data.inviteToken) {
-      // Validate invite token
+      // Hash the submitted token and look up by hash (H-1: tokens stored hashed)
+      const tokenHash = createHash("sha256").update(parsed.data.inviteToken).digest("hex");
       const invite = await prisma.invite.findUnique({
-        where: { token: parsed.data.inviteToken },
+        where: { token: tokenHash },
       });
 
       if (!invite) {
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hash(parsed.data.password, 12);
 
-    // Create user
+    // Create user — flag for forced password change on first login
     const user = await prisma.user.create({
       data: {
         email: parsed.data.email,
@@ -107,6 +109,7 @@ export async function POST(request: NextRequest) {
         name: parsed.data.name,
         role,
         organizationId,
+        mustChangePassword: true,
       },
     });
 
