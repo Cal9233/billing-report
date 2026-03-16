@@ -10,7 +10,7 @@ export default defineConfig({
     ['json', { outputFile: './e2e-results.json' }],
   ],
   use: {
-    baseURL: 'http://192.168.56.1:3099',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',

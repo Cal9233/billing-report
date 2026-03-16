@@ -6,7 +6,7 @@ import { test, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const BASE = 'http://192.168.56.1:3000';
+const BASE = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
 const screenshotDir = path.join(__dirname, '../e2e-screenshots/critical-flow');
 if (!fs.existsSync(screenshotDir)) fs.mkdirSync(screenshotDir, { recursive: true });
@@ -25,8 +25,8 @@ async function login(page: Page) {
   // Navigate to login
   await page.goto(`${BASE}/auth/login`, { waitUntil: 'load', timeout: 30000 });
   await page.waitForSelector('#email', { state: 'visible', timeout: 10000 });
-  await page.locator('#email').fill('admin@billflow.local');
-  await page.locator('#password').fill('Demo123!');
+  await page.locator('#email').fill(process.env.E2E_ADMIN_EMAIL || 'admin@billflow.local');
+  await page.locator('#password').fill(process.env.E2E_ADMIN_PASSWORD || 'Demo123!');
   await page.getByRole('button', { name: /Sign In/i }).click();
 
   // Wait for dashboard; if we land back on login (CSRF/redirect issue), retry once
@@ -56,8 +56,8 @@ test('Step 1: Login with demo credentials and verify dashboard redirect', async 
   console.log('PASS: Redirected to /auth/login');
 
   // Fill in credentials
-  await page.locator('#email').fill('admin@billflow.local');
-  await page.locator('#password').fill('Demo123!');
+  await page.locator('#email').fill(process.env.E2E_ADMIN_EMAIL || 'admin@billflow.local');
+  await page.locator('#password').fill(process.env.E2E_ADMIN_PASSWORD || 'Demo123!');
   await page.getByRole('button', { name: /Sign In/i }).click();
 
   // Wait for redirect to dashboard

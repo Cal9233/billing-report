@@ -12,3 +12,6 @@ prisma/*.db
 .env.local
 .env.*.local
 .vercel
+e2e-results.json
+test-results/
+e2e-screenshots/

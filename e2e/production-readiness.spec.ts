@@ -10,15 +10,15 @@
  *   - PDF generation for invoice + PO
  *   - Delete + redirect for invoice + PO
  *
- * App is running on the Windows host at 192.168.56.1:3000.
- * Tests use the demo account: admin@billflow.local / Demo123!
+ * App base URL is read from PLAYWRIGHT_BASE_URL env var (default: http://localhost:3000).
+ * Test credentials are read from E2E_ADMIN_EMAIL / E2E_ADMIN_PASSWORD env vars.
  */
 
 import { test, expect, Page } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 
-const BASE = "http://192.168.56.1:3000";
+const BASE = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000";
 
 // ─── Screenshot helpers ───────────────────────────────────────────────────────
 
@@ -66,8 +66,8 @@ async function login(page: Page) {
     await page.waitForTimeout(1500);
   }
 
-  await emailLocator.fill("admin@billflow.local");
-  await page.locator("#password").fill("Demo123!");
+  await emailLocator.fill(process.env.E2E_ADMIN_EMAIL || "admin@billflow.local");
+  await page.locator("#password").fill(process.env.E2E_ADMIN_PASSWORD || "Demo123!");
   await page.getByRole("button", { name: /Sign In/i }).click();
   await page.waitForTimeout(2000); // wait for signIn() API call
 
@@ -80,8 +80,8 @@ async function login(page: Page) {
       waitUntil: "load",
     });
     await page.waitForTimeout(2000);
-    await page.locator("#email").fill("admin@billflow.local");
-    await page.locator("#password").fill("Demo123!");
+    await page.locator("#email").fill(process.env.E2E_ADMIN_EMAIL || "admin@billflow.local");
+    await page.locator("#password").fill(process.env.E2E_ADMIN_PASSWORD || "Demo123!");
     await page.getByRole("button", { name: /Sign In/i }).click();
     await page.waitForTimeout(2000);
     await page.waitForURL(/\/dashboard/, { timeout: 30000 });
@@ -118,8 +118,8 @@ test("Test 1: Login + dashboard loads with metric cards and correct sidebar", as
   expect(page.url()).toContain("/auth/login");
 
   // Fill credentials and submit
-  await page.locator("#email").fill("admin@billflow.local");
-  await page.locator("#password").fill("Demo123!");
+  await page.locator("#email").fill(process.env.E2E_ADMIN_EMAIL || "admin@billflow.local");
+  await page.locator("#password").fill(process.env.E2E_ADMIN_PASSWORD || "Demo123!");
   await page.getByRole("button", { name: /Sign In/i }).click();
   // Give the form time to call signIn() and get a response
   await page.waitForTimeout(2000);

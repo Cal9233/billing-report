@@ -2,7 +2,7 @@ import { test, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const BASE = 'http://192.168.56.1:3000';
+const BASE = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
 // ─── Screenshot helper ────────────────────────────────────────────────────────
 
@@ -34,8 +34,8 @@ async function login(page: Page) {
   }
 
   await page.waitForSelector('#email', { state: 'visible', timeout: 10000 });
-  await page.locator('#email').fill('admin@billflow.local');
-  await page.locator('#password').fill('Demo123!');
+  await page.locator('#email').fill(process.env.E2E_ADMIN_EMAIL || 'admin@billflow.local');
+  await page.locator('#password').fill(process.env.E2E_ADMIN_PASSWORD || 'Demo123!');
   await page.getByRole('button', { name: /Sign In/i }).click();
 
   try {
